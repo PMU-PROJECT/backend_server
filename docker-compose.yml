@@ -1,0 +1,9 @@
+version: '3.3'
+
+services:
+  web:
+    build:
+      context: .
+    command: gunicorn --config config/gunicorn_config.py app:application
+    ports:
+      - 37888:37888

@@ -1,0 +1,10 @@
+version: '3.3'
+
+services:
+  web:
+    image: #URL OF IMAGE
+    command: gunicorn --config gunicorn_config.py app:application
+    ports:
+      - 37888:37888
+      #TODO expose ports based on conf.cfg
+
