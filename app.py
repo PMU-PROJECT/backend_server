@@ -27,3 +27,8 @@ def reset():
 # For easier debugging, start this file (instead of docker)
 if __name__ == "__main__":
     application.run(host='0.0.0.0', port=PORT)
+
+
+# Put anything that you want to start from Gunicorn master proccess here
+def on_starting(server):
+    pass
