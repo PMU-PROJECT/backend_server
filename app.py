@@ -1,9 +1,18 @@
-from config.logger_config import logger
-from flask import Flask, request
-from utils.enviromental_variables import PORT
+# System imports
 import json
 
+# Dependency imports
+from flask import Flask, request
+
+# Own imports
+from .config.logger_config import logger
+from .utils.enviromental_variables import PORT
+from .database import db_init
+
+
 application = Flask(__name__)
+
+application.before_first_request(application.ensure_sync(db_init))
 
 ###### REQUEST HANDLERS ######
 
@@ -24,7 +33,7 @@ def reset():
 ###### WEB SERVER START ######
 
 
-# For easier debugging, start this file (instead of docker)
+# For easier debugging, run with `python3 -m app` (instead of docker)
 if __name__ == "__main__":
     application.run(host='0.0.0.0', port=PORT)
 
