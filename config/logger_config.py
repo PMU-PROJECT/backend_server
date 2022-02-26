@@ -1,5 +1,6 @@
 import logging
 
+
 logger = logging.getLogger('web_logger')
 
 logger.setLevel(logging.DEBUG)
