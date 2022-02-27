@@ -7,3 +7,4 @@ services:
     command: gunicorn --config gunicorn_config.py wsgi:application
     ports:
       - 37888:37888
+      - 5432:5432
