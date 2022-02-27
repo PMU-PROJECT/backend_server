@@ -2,7 +2,7 @@
 import json
 
 # Dependency imports
-from flask import Flask, request
+from quart import Quart, request
 
 # Own imports
 from .config.logger_config import logger
@@ -10,9 +10,9 @@ from .utils.enviromental_variables import PORT
 from .database import db_init
 
 
-application = Flask(__name__)
+application = Quart(__name__)
 
-application.before_first_request(application.ensure_sync(db_init))
+application.before_serving(db_init)
 
 
 ###### REQUEST HANDLERS ######

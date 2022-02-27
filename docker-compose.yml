@@ -4,7 +4,7 @@ services:
   web:
     build:
       context: .
-    command: gunicorn --config gunicorn_config.py wsgi:application
+    command: hypercorn -b 0.0.0.0:37888 wsgi:application
     ports:
       - 37888:37888
       - 5432:5432

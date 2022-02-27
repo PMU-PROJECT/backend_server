@@ -1,17 +1,22 @@
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 
 from ..utils.enviromental_variables import USER, PASS, HOST, DATABASE
 from .model import *
 
 
-database: AsyncEngine
+database: AsyncEngine = create_async_engine(
+    f'postgresql+asyncpg://{USER}:{PASS}@{HOST}/{DATABASE}')
+
+async_session: sessionmaker = sessionmaker(
+    bind=database,
+    class_=AsyncSession,
+    autoflush=True,
+)
 
 
 async def db_init():
     global database
-
-    database = create_async_engine(
-        f'postgresql+asyncpg://{USER}:{PASS}@{HOST}/{DATABASE}')
 
     async with database.begin() as connection:
         await connection.run_sync(ORMBase.metadata.create_all,)

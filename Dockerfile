@@ -8,7 +8,7 @@ COPY . .
 
 RUN pip3 install -r requirements.txt
 
-RUN pip3 install gunicorn
+RUN pip3 install hypercorn
 
 #TODO expose ports based on conf.cfg
 EXPOSE 37888 5432
