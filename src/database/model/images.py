@@ -10,4 +10,4 @@ class Images(ORMBase):
 
     id = id_column('image_id',)
 
-    data = Column('name', LargeBinary(),)
+    data = Column('data', LargeBinary(),)
