@@ -4,6 +4,6 @@ services:
   web:
     build:
       context: .
-    command: gunicorn --config config/gunicorn_config.py app:application
+    command: gunicorn --config src/config/gunicorn_config.py wsgi:application
     ports:
       - 37888:37888

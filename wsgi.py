@@ -1,4 +1,4 @@
-from src import manual_run
+from src import application, manual_run
 
 
 # For easier debugging, run with `python3 -m wsgi` (instead of docker)
