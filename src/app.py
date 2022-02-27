@@ -14,8 +14,8 @@ application = Flask(__name__)
 
 application.before_first_request(application.ensure_sync(db_init))
 
-###### REQUEST HANDLERS ######
 
+###### REQUEST HANDLERS ######
 
 @application.route('/get_site_info', methods=['POST'])
 def interactive():
@@ -31,10 +31,7 @@ def reset():
 
 
 ###### WEB SERVER START ######
-
-
-# For easier debugging, run with `python3 -m app` (instead of docker)
-if __name__ == "__main__":
+def manual_run():
     application.run(host='0.0.0.0', port=PORT)
 
 

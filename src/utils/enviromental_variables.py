@@ -3,7 +3,7 @@ import os
 
 
 conf = configparser.ConfigParser()
-conf.read(os.path.join("config", "conf.cfg"))
+conf.read(os.path.join("conf.cfg"))
 
 # Web
 PORT = int(conf['WEB']['port'])
