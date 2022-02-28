@@ -9,6 +9,7 @@ from .model.regions import Regions as RegionsModel
 
 
 class Places(object):
+    @staticmethod
     async def all(session: AsyncSession) -> List[Dict[str, Any]]:
         return list(
             map(

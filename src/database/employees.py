@@ -8,6 +8,7 @@ from .model.users import Users as UsersModel
 
 
 class Employees(object):
+    @staticmethod
     async def all_by_place(session: AsyncSession, id: int) -> List[Dict[str, Any]]:
         return list(
             map(

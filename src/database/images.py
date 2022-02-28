@@ -7,6 +7,7 @@ from .model.images import Images as ImagesModel
 
 
 class Images(object):
+    @staticmethod
     async def all_by_place(session: AsyncSession, id: int) -> List[str]:
         return (
             await session.stream(
