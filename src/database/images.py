@@ -13,7 +13,7 @@ class Images(object):
             await session.stream(
                 select(
                     [
-                        ImagesModel.data,
+                        ImagesModel.filename,
                     ],
                 ).where(
                     ImagesModel.place_id == literal(id,),
