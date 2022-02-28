@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .config.logger_config import logger
 from .utils.enviromental_variables import PORT
 from .database import db_init, async_session
-from .database import db_helper
 
 
 application = Quart(__name__)
@@ -19,17 +18,18 @@ application.before_serving(db_init)
 
 ###### REQUEST HANDLERS ######
 
-@application.route('/get_site_info', methods=['POST'])
+@application.route('/get_tourist_sites_info', methods=['POST'])
 async def interactive():
     data = json.loads(request.form.get('payload'))
+
+    # TODO check token
+
     logger.debug("User requested site info")
 
     async with async_session() as session:
         session: AsyncSession
 
-        all_places = db_helper.get_places_info(session)
-
-    return all_places, 200
+    return {}, 200
 
 
 @application.route('/reset', methods=['POST'])
