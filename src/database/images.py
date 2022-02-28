@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import select, literal
 
 from .model.images import Images as ImagesModel
-from .model.places import Places as PlacesModel
 
 
 class Images(object):
