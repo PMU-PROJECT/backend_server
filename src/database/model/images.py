@@ -1,3 +1,4 @@
+from sqlalchemy import String
 from sqlalchemy.schema import Column
 from sqlalchemy.types import LargeBinary
 
@@ -10,4 +11,4 @@ class Images(ORMBase):
 
     id = id_column('image_id',)
 
-    data = Column('data', LargeBinary(),)
+    filename = Column('filename', String(127),)
