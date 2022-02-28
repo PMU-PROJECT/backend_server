@@ -14,18 +14,15 @@ The app runs on port 37888
 
 **database**
 
-1. If running from local machine
-
-allow connection from all IPs
+allow connection from all IPs (to allow docker hypercorn container to run)
 - In installdir/data/pg_hba.conf, insert
 - host all             all              all              scram-sha-256
 
 **Quart**
 
-2.  debug 
 - Open a terminal and type
-- /Win/ set QUART_APP=wsgi:application /Unix/ QUART_APP=wsgi:application
-- Start the application with py -m wsgi.py
+- /Win/ `set QUART_APP=wsgi:application` /Unix/ `QUART_APP=wsgi:application`
+- Start the application with `py -m wsgi.py`
 
 
 **Hypercorn**
