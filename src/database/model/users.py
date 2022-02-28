@@ -18,4 +18,5 @@ class Users(ORMBase):
         CheckConstraint("email ~* '^\\w+@(?:\\w+.)*\\w+$'",),
     )
 
-    profile_picture = Column('profile_picture', String(127), )
+    profile_picture = Column('profile_picture', String(
+        127), default="default_profile_pic.png")
