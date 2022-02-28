@@ -2,9 +2,10 @@
 
 [WEB]
 port = 37888
+# Change in dockerfile and docker-compose as well
 
 [Database]
-host = ...
-user = ...
-pass = ...
-database = ...
+host = localhost:5432
+user = db_user
+pass = db_pass
+database = db_name

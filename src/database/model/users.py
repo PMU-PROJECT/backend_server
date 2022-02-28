@@ -1,3 +1,4 @@
+from sqlalchemy import String
 from sqlalchemy.schema import Column, CheckConstraint
 from sqlalchemy.types import Unicode
 
@@ -16,3 +17,5 @@ class Users(ORMBase):
         Unicode(255,),
         CheckConstraint("email ~* '^\\w+@(?:\\w+.)*\\w+$'",),
     )
+
+    profile_picture = Column('profile_picture', String(127), )

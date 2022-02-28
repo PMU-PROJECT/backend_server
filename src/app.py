@@ -3,11 +3,13 @@ import json
 
 # Dependency imports
 from quart import Quart, request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Own imports
 from .config.logger_config import logger
 from .utils.enviromental_variables import PORT
-from .database import db_init
+from .database import db_init, async_session
+from .database import db_helper
 
 
 application = Quart(__name__)
@@ -18,10 +20,16 @@ application.before_serving(db_init)
 ###### REQUEST HANDLERS ######
 
 @application.route('/get_site_info', methods=['POST'])
-def interactive():
+async def interactive():
     data = json.loads(request.form.get('payload'))
     logger.debug("User requested site info")
-    return '', 200
+
+    async with async_session() as session:
+        session: AsyncSession
+
+        all_places = db_helper.get_places_info(session)
+
+    return all_places, 200
 
 
 @application.route('/reset', methods=['POST'])

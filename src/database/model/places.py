@@ -1,3 +1,4 @@
+from sqlalchemy import Text
 from sqlalchemy.schema import Column
 from sqlalchemy.types import Numeric, Unicode
 
@@ -11,6 +12,8 @@ class Places(ORMBase):
     id = id_column('place_id',)
 
     name = Column('name', Unicode(255,),)
+
+    description = Column('description', Text(),)
 
     latitude = Column(
         'latitude',
