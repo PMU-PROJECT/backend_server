@@ -16,10 +16,9 @@ The app runs on port 37888
 
 1. If running from local machine
 
-allow connection from samenet IPs
+allow connection from all IPs
 - In installdir/data/pg_hba.conf, insert
-- host *database_name* *database_user* 172.17.0.0/16 trust
-- where you replace database_name and database_user with the ones you created
+- host all             all              all              scram-sha-256
 
 **Quart**
 
@@ -30,3 +29,8 @@ allow connection from samenet IPs
 
 
 **Hypercorn**
+
+- Install docker
+- open directory of project
+- type `docker-compose up --build`
+- After building the images, you can start it from the docker app or by typing `docker-compose up` in the terminal
