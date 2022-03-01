@@ -13,8 +13,8 @@ class Employees(object):
         return list(
             map(
                 lambda result: result._asdict(),
-                (
-                    await session.execute(
+                await (
+                    await session.stream(
                         select(
                             [
                                 UsersModel.first_name,

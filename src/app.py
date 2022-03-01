@@ -22,7 +22,7 @@ application.before_serving(db_init)
 
 @application.route('/get_tourist_sites_info', methods=['GET'])
 async def interactive():
-    data = request.form
+    data = await request.form
     # TODO check token
 
     logger.debug("User requested site info")
@@ -31,12 +31,12 @@ async def interactive():
         session: AsyncSession
         sites = await get_tourist_sites(session)
 
-    return sites, 200
+    return {'s': sites}, 200
 
 
 @application.route('/reset', methods=['POST'])
-def reset():
-    data = request.form
+async def reset():
+    data = await request.form
     return '', 200
 
 

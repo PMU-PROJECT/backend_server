@@ -14,7 +14,7 @@ class Places(object):
         return list(
             map(
                 lambda result: result._asdict(),
-                (
+                await (
                     await session.stream(
                         select(
                             [
