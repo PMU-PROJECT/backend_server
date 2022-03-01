@@ -20,8 +20,8 @@ application.before_serving(db_init)
 
 ###### REQUEST HANDLERS ######
 
-@application.route('/get_tourist_sites_info', methods=['GET'])
-async def interactive():
+@application.route('/api/get_all_sites', methods=['POST'])
+async def get_all_sites():
     data = await request.form
     # TODO check token
 
@@ -31,12 +31,14 @@ async def interactive():
         session: AsyncSession
         sites = await get_tourist_sites(session)
 
-    return {'s': sites}, 200
+    return sites, 200
 
 
-@application.route('/reset', methods=['POST'])
+@application.route('/api/pictures', methods=['POST'])
 async def reset():
     data = await request.form
+    print(data)
+
     return '', 200
 
 

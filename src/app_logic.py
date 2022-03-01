@@ -1,3 +1,4 @@
+import simplejson as json
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .database.places import Places
@@ -7,24 +8,40 @@ from .database.images import Images
 
 async def get_tourist_sites(session: AsyncSession):
     '''
-    DUMMY FUNCTION
-    shows how to create logic for program
+    Function for creating a JSON-able dictionary, containing data for all the tourist sites in the Database.
+    Includes Place, City, Region, connected Images and connected Employee ID's
 
-    Make connection with DB
-    get tourist sites info
-    return it
+    params:
+        session : AsyncSession -> Session to the database
+
+    returns:
+        dictionary, with a key value 'sites' and value a list, containing the tourist sites
     '''
-    all_sites = await Images.all_by_place(session, 1)
-    print(all_sites)
-    print(type(all_sites))
+    sites_db = await Places.all(session)
+    sites_jsonable = {'sites': []}
 
-    '''
-    for i, site in enumerate(all_sites):
-        images = Images.all_by_place(site.get('id'))
-        employees = Employees.all_by_place(site.get('id'))
+    for site in sites_db:
 
-        all_sites[i]['images'] = images
-        all_sites[i]['employees'] = employees
-    '''
+        print(site['id'])
 
-    return all_sites
+        current_site = {}
+        # lists
+        current_site['images'] = await Images.all_by_place(session, site.get('id'))
+        current_site['employees'] = await Employees.all_by_place(session, site.get('id'))
+
+        # Make latitude and longitude JSON serializable
+        current_site['latitude'] = json.dumps(
+            site['latitude'], use_decimal=True)
+        current_site['longitude'] = json.dumps(
+            site['longitude'], use_decimal=True)
+
+        # Other variables
+        current_site['region'] = site['name']
+        current_site['city'] = site['name_1']
+        current_site['name'] = site['name_2']
+        current_site['description'] = site['description']
+
+        # append the dictionary in the list after writing all the vars
+        sites_jsonable['sites'].append(current_site)
+
+    return sites_jsonable
