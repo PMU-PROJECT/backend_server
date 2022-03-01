@@ -20,6 +20,7 @@ class Places(object):
                             [
                                 RegionsModel.name,
                                 CitiesModel.name,
+                                PlacesModel.id,
                                 PlacesModel.name,
                                 PlacesModel.description,
                                 PlacesModel.latitude,
