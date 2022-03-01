@@ -1,28 +1,29 @@
 # System imports
 import json
+import os
+from os import path
 
 # Dependency imports
-from quart import Quart, request
+from quart import Quart, request, send_file
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from src.app_logic import get_tourist_sites
 
 # Own imports
 from .config.logger_config import logger
 from .utils.enviromental_variables import PORT
 from .database import db_init, async_session
-
+from src.app_logic import get_tourist_sites
 
 application = Quart(__name__)
 
 application.before_serving(db_init)
 
 
-###### REQUEST HANDLERS ######
+###### API REQUEST HANDLERS ######
 
-@application.route('/api/get_all_sites', methods=['POST'])
+@application.route('/api/get_all_sites', methods=['GET'])
 async def get_all_sites():
-    data = await request.form
+    args = request.args
+    headers = request.headers
     # TODO check token
 
     logger.debug("User requested site info")
@@ -33,11 +34,51 @@ async def get_all_sites():
 
     return sites, 200
 
+###### IMAGE SERVER HANDLERS ######
 
-@application.route('/api/pictures', methods=['POST'])
-async def reset():
-    data = await request.form
-    print(data)
+
+@application.route('/imageserver/tourist_sites', methods=['GET'])
+async def tourist_site_photo():
+    '''
+    based on an 'pic_name' arg, send back a photo from public/tourist_sites folder.
+    Requires Auth token
+    '''
+    args = request.args
+    headers = request.headers
+
+    # TODO check token
+    if headers.get('Authorization') is None:
+        return '', 401
+
+    if args.get('pic_name') is not None:
+        file_path = os.path.join(
+            'public', 'tourist_sites', args.get('pic_name'))
+
+        if path.isfile(file_path):
+            return await send_file(file_path, mimetype='image/gif')
+        else:
+            return 'File not found', 404
+
+    return '', 200
+
+
+@application.route('/imageserver/profile_pictures', methods=['GET'])
+async def profile_pictures():
+    args = request.args
+    headers = request.headers
+
+    # TODO check token
+    if headers.get('Authorization') is None:
+        return '', 401
+
+    if args.get('pic_name') is not None:
+        file_path = os.path.join(
+            'public', 'profile_pictures', args.get('pic_name'))
+
+        if path.isfile(file_path):
+            return await send_file(file_path, mimetype='image/gif')
+        else:
+            return 'File not found', 404
 
     return '', 200
 
