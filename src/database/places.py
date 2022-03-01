@@ -21,7 +21,7 @@ class Places(object):
                                 RegionsModel.name,
                                 CitiesModel.name,
                                 PlacesModel.name,
-                                PlacesModel.name,
+                                PlacesModel.description,
                                 PlacesModel.latitude,
                                 PlacesModel.longitude,
                             ],
