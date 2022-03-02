@@ -1,5 +1,4 @@
 # System imports
-import json
 import os
 from os import path
 
@@ -57,7 +56,7 @@ async def tourist_site_photo():
         if path.isfile(file_path):
             return await send_file(file_path, mimetype='image/gif')
         else:
-            return 'File not found', 404
+            return '', 404
 
     return '', 200
 
@@ -78,7 +77,7 @@ async def profile_pictures():
         if path.isfile(file_path):
             return await send_file(file_path, mimetype='image/gif')
         else:
-            return 'File not found', 404
+            return '', 404
 
     return '', 200
 
