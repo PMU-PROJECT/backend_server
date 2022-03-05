@@ -16,7 +16,7 @@ The app runs on port 37888
 
 allow connection from all IPs (to allow docker hypercorn container to run)
 - In installdir/data/pg_hba.conf, insert
-- host all             all              all              scram-sha-256
+- host all             all              sament              scram-sha-256
 
 **Quart**
 
