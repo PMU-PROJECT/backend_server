@@ -1,7 +1,6 @@
 import configparser
 import os
 
-
 conf = configparser.ConfigParser()
 conf.read(os.path.join("conf.cfg"))
 

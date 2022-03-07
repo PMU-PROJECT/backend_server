@@ -15,12 +15,12 @@ class Employees(object):
             (
                 await session.execute(
                     select(literal(True))
-                    .where(
-                        select(EmployeesModel)
                         .where(
+                        select(EmployeesModel)
+                            .where(
                             EmployeesModel.id == user_id,
                         )
-                        .exists(),
+                            .exists(),
                     )
                 )
             ).scalar()

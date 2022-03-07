@@ -1,6 +1,5 @@
 from typing import Any, Dict, List
 
-from sqlalchemy import literal
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import select
 

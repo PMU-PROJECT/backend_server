@@ -10,12 +10,12 @@ from .users import Users
 class RewardsLog(ORMBase):
     visitor_id = id_ref_column(
         'visitor_id', Users.id, options={
-            'primary_key': True, },)
+            'primary_key': True, }, )
 
-    employee_id = id_ref_column('employee_id', Employees.id,)
+    employee_id = id_ref_column('employee_id', Employees.id, )
 
     reward_id = id_ref_column(
         'reward_id', Rewards.id, options={
-            'primary_key': True, },)
+            'primary_key': True, }, )
 
-    given_on = Column('given_on', DateTime(timezone=True,),)
+    given_on = Column('given_on', DateTime(timezone=True, ), )
