@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+from sqlalchemy import literal
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import select
 
@@ -9,7 +10,24 @@ from .model.users import Users as UsersModel
 
 class Employees(object):
     @staticmethod
-    async def all_by_place(session: AsyncSession, id: int) -> List[Dict[str, Any]]:
+    async def exists(session: AsyncSession, user_id: int) -> bool:
+        return bool(
+            (
+                await session.execute(
+                    select(literal(True))
+                    .where(
+                        select(EmployeesModel)
+                        .where(
+                            EmployeesModel.id == user_id,
+                        )
+                        .exists(),
+                    )
+                )
+            ).scalar()
+        )
+
+    @staticmethod
+    async def all_by_place(session: AsyncSession, place_id: int) -> List[Dict[str, Any]]:
         return list(
             map(
                 lambda result: result._asdict(),
@@ -29,7 +47,7 @@ class Employees(object):
                             UsersModel,
                             EmployeesModel.id == UsersModel.id,
                         ).where(
-                            EmployeesModel.place_id == id
+                            EmployeesModel.place_id == place_id
                         ),
                     )
                 ).all(),

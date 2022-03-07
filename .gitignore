@@ -159,6 +159,9 @@ sheets_client_secret.json
 #VSCode 
 *.code-workspace
 
+# IntelliJ IDEs
+.idea/
+
 #Photos
 *.png
 *.jpg
