@@ -11,7 +11,7 @@ class Users(object):
     @staticmethod
     async def by_id(session: AsyncSession, user_id: int) -> Union[None, Dict[str, Any]]:
         result: Union[None, Row] = (
-            await session.stream(
+            await session.execute(
                 select(
                     [
                         UsersModel.first_name,
@@ -23,6 +23,6 @@ class Users(object):
                     UsersModel.id == user_id
                 ),
             )
-        ).scalar()
+        ).first()
 
         return None if result is None else result._asdict()
