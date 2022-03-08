@@ -48,13 +48,13 @@ class Employees(object):
     @staticmethod
     async def by_id(session: AsyncSession, employee_id: int) -> Union[None, Dict[str, Any]]:
         result: Union[None, Row] = (
-            await session.stream(
+            await session.execute(
                 Employees.__query()
-                    .where(
+                .where(
                     EmployeesModel.id == employee_id
                 ),
             )
-        ).scalar()
+        ).first()
 
         return None if result is None else result._asdict()
 
