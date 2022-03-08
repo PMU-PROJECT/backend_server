@@ -6,19 +6,27 @@ from os import path
 from quart import Quart, request, send_file
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.app_logic import get_tourist_sites
 # Own imports
+from .app_logic import get_tourist_sites
 from .config.logger_config import logger
 from .database import db_init, async_session
 from .utils.enviromental_variables import PORT
+from .google_api import google_api
 
 application = Quart(__name__)
 
 application.before_serving(db_init)
 
 
-###### API REQUEST HANDLERS ######
+@application.route('/api/oauth2/google', ['GET'])
+async def google_oauth2():
+    print(google_api.authorization_url())
+    print(request.args)
 
+    return {}, 200
+
+
+# ###### API REQUEST HANDLERS ######
 @application.route('/api/get_all_sites', methods=['GET'])
 async def get_all_sites():
     args = request.args
@@ -34,7 +42,7 @@ async def get_all_sites():
     return sites, 200
 
 
-###### IMAGE SERVER HANDLERS ######
+# ###### IMAGE SERVER HANDLERS ######
 
 
 @application.route('/imageserver/tourist_sites', methods=['GET'])
@@ -83,11 +91,11 @@ async def profile_pictures():
     return '', 200
 
 
-###### WEB SERVER START ######
+# ###### WEB SERVER START ######
 def manual_run():
     application.run(host='0.0.0.0', port=PORT, debug=True)
 
 
-# Put anything that you want to start from Gunicorn master proccess here
+# Put anything that you want to start from Gunicorn master process here
 def on_starting(server):
     pass
