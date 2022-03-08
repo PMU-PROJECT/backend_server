@@ -19,4 +19,4 @@ class Users(ORMBase):
     )
 
     profile_picture = Column('profile_picture', String(
-        127), default="default_profile_pic.png")
+        127), default='default_profile_pic.png')
