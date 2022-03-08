@@ -41,7 +41,7 @@ class Places(object):
                     PlacesModel.id == place_id,
                 ),
             )
-        )
+        ).first()
 
         return None if result is None else result._asdict()
 
