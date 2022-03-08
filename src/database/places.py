@@ -37,7 +37,7 @@ class Places(object):
         result: Union[None, Row] = (
             await session.execute(
                 Places.__query()
-                    .where(
+                .where(
                     PlacesModel.id == place_id,
                 ),
             )
