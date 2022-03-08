@@ -5,6 +5,6 @@ from . import ORMBase, id_column
 
 
 class Regions(ORMBase):
-    id = id_column('region_id',)
+    id = id_column('region_id', )
 
-    name = Column('name', Unicode(255,),)
+    name = Column('name', Unicode(255, ), )

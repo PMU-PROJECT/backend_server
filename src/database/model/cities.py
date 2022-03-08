@@ -6,8 +6,8 @@ from .regions import Regions
 
 
 class Cities(ORMBase):
-    region_id = id_ref_column('region_id', Regions.id,)
+    region_id = id_ref_column('region_id', Regions.id, )
 
-    id = id_column('city_id',)
+    id = id_column('city_id', )
 
-    name = Column('name', Unicode(255,),)
+    name = Column('name', Unicode(255, ), )

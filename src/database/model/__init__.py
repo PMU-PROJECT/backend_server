@@ -1,13 +1,13 @@
 from .__helper import ORMBase, id_column, id_ref_column
 
-from . import administrators
-from . import cities
-from . import employees
-from . import images
-from . import local_users
-from . import places
-from . import regions
-from . import rewards
-from . import rewards_log
-from . import stamps
-from . import users
+from .administrators import Administrators
+from .cities import Cities
+from .employees import Employees
+from .images import Images
+from .local_users import LocalUsers
+from .places import Places
+from .regions import Regions
+from .rewards import Rewards
+from .rewards_log import RewardsLog
+from .stamps import Stamps
+from .users import Users

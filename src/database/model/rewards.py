@@ -5,8 +5,8 @@ from . import ORMBase, id_column
 
 
 class Rewards(ORMBase):
-    id = id_column('reward_id',)
+    id = id_column('reward_id', )
 
-    name = Column('name', Unicode(127,),)
+    name = Column('name', Unicode(127, ), )
 
-    description = Column('description', Unicode(511,),)
+    description = Column('description', Unicode(511, ), )

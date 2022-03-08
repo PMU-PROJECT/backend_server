@@ -1,9 +1,9 @@
 import simplejson as json
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .database.places import Places
 from .database.employees import Employees
 from .database.images import Images
+from .database.places import Places
 
 
 async def get_tourist_sites(session: AsyncSession):
@@ -21,7 +21,6 @@ async def get_tourist_sites(session: AsyncSession):
     sites_jsonable = {'sites': []}
 
     for site in sites_db:
-
         print(site['id'])
 
         current_site = {}

@@ -6,11 +6,11 @@ from os import path
 from quart import Quart, request, send_file
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.app_logic import get_tourist_sites
 # Own imports
 from .config.logger_config import logger
-from .utils.enviromental_variables import PORT
 from .database import db_init, async_session
-from src.app_logic import get_tourist_sites
+from .utils.enviromental_variables import PORT
 
 application = Quart(__name__)
 
@@ -35,7 +35,7 @@ async def get_all_sites():
 
     return sites, 200
 
-
+  
 @application.route('/api/get_site_info', methods=['GET'])
 async def get_site_info():
     args = request.args
