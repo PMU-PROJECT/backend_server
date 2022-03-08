@@ -1,6 +1,7 @@
 # System imports
 import os
 from os import path
+from typing import List
 
 # Dependency imports
 from quart import Quart, request, send_file
@@ -8,22 +9,36 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 # Own imports
 from .app_logic import get_tourist_sites
+from .auth import AuthenticationError, validate_token, verify_password, generate_token
 from .config.logger_config import logger
 from .database import db_init, async_session
-from .utils.enviromental_variables import PORT
+from .database.local_users import LocalUsers
 from .google_api import google_api
+from .utils.enviromental_variables import PORT
+
+UNAUTHENTICATED_URLS: List[str] = [
+    '/api/login',
+    '/api/oauth2/google',
+]
 
 application = Quart(__name__)
 
 application.before_serving(db_init)
+application.register_error_handler(AuthenticationError, lambda _: ({'error': 'Authentication failed!', }, 401,))
 
 
-@application.route('/api/oauth2/google', ['GET'])
+@application.before_request
+def auth_before_request():
+    if request.path not in UNAUTHENTICATED_URLS:
+        request.authenticated_user = validate_token(request.headers.get('Authorization', None))
+
+
+@application.route('/api/oauth2/google', methods=['GET'])
 async def google_oauth2():
     print(google_api.authorization_url())
     print(request.args)
 
-    return {}, 200
+    raise AuthenticationError()
 
 
 # ###### API REQUEST HANDLERS ######
@@ -44,7 +59,7 @@ async def get_all_sites():
 
     return sites, 200
 
-  
+
 @application.route('/api/get_site_info', methods=['GET'])
 async def get_site_info():
     args = request.args
@@ -58,6 +73,7 @@ async def get_site_info():
         site = {'site': None}  # TODO change
 
     return site, 200
+
 
 # Login and registration endpoints
 
@@ -82,7 +98,7 @@ async def registration():
 
 @application.route('/api/login', methods=['POST'])
 async def login():
-    form = request.json
+    form = await request.json
 
     email = form.get('email')
     password = form.get('password')
@@ -90,11 +106,15 @@ async def login():
     if None in (email, password):
         return 'insufficient information', 422
 
-    # TODO check if user exists
-    # TODO return token if yes
-    # TODO return error code if no
+    async with async_session() as session:
+        user_id, pw_hash = await LocalUsers.by_email(session, email)
 
-    return {'token': 'yes'}
+        if verify_password(password, pw_hash):
+            return {
+                'token': generate_token(user_id),
+            }
+
+        raise AuthenticationError()
 
 
 @application.route('/api/google_login', methods=['POST'])
@@ -116,10 +136,11 @@ async def google_login():
 
     return {'token': 'yes'}
 
+
 # User info endpoint
 
 
-@application.route('api/get_user_info', methods=['GET'])
+@application.route('/api/get_user_info', methods=['GET'])
 async def get_user_info():
     headers = request.headers
 
@@ -130,6 +151,7 @@ async def get_user_info():
     async with async_session() as session:
         session: AsyncSession
         sites = await get_tourist_sites(session)
+
 
 # ###### IMAGE SERVER HANDLERS ######
 
