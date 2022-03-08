@@ -30,5 +30,5 @@ class Stamps(ORMBase):
     given_on = Column(
         'given_on',
         DateTime(timezone=True, ),
-        server_default=now,
+        server_default=now(),
     )
