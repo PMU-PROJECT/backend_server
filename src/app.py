@@ -6,7 +6,7 @@ from os import path
 from quart import Quart, request, send_file
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.app_logic import get_tourist_sites
+from src.app_logic import get_site_by_id, get_tourist_sites, get_user_info
 # Own imports
 from .config.logger_config import logger
 from .database import db_init, async_session
@@ -25,7 +25,10 @@ application.before_serving(db_init)
 async def get_all_sites():
     args = request.args
     headers = request.headers
+
     # TODO check token
+    if int(headers.get("Authorization")) != 3:
+        return '', 401
 
     logger.debug("User requested all site info")
 
@@ -35,18 +38,23 @@ async def get_all_sites():
 
     return sites, 200
 
-  
+
 @application.route('/api/get_site_info', methods=['GET'])
 async def get_site_info():
     args = request.args
     headers = request.headers
+
+    print(f"token: {headers.get('Authorization')}")
+
     # TODO check token
+    if int(headers.get("Authorization")) != 3:
+        return '', 401
 
     logger.debug("User requested site detailed info")
 
     async with async_session() as session:
         session: AsyncSession
-        site = {'site': None}  # TODO change
+        site = await get_site_by_id(session, int(args.get("id")))
 
     return site, 200
 
@@ -55,7 +63,7 @@ async def get_site_info():
 
 @application.route('/api/registration', methods=['POST'])
 async def registration():
-    form = request.json
+    form = request.args
 
     first_name = form.get('first_name')
     last_name = form.get('last_name')
@@ -68,12 +76,12 @@ async def registration():
     # TODO request to DB for registration
     # TODO generate JWT token and return it
 
-    return {'token': 'yes'}
+    return {'token': '3'}, 200
 
 
 @application.route('/api/login', methods=['POST'])
 async def login():
-    form = request.json
+    form = request.args
 
     email = form.get('email')
     password = form.get('password')
@@ -81,19 +89,22 @@ async def login():
     if None in (email, password):
         return 'insufficient information', 422
 
+    # TODO DUMMY CHECK DELETE
+    if email != 'user@gmail.com' or str(password) != "123456":
+        return '', 401
+
     # TODO check if user exists
     # TODO return token if yes
     # TODO return error code if no
 
-    return {'token': 'yes'}
+    return {'token': '3'}, 200
 
 
 @application.route('/api/google_login', methods=['POST'])
 async def google_login():
-    form = request.json
+    form = request.args
 
     google_token = form.get('token')
-    password = form.get('password')
 
     if google_token is None:
         return 'insufficient information', 422
@@ -105,22 +116,27 @@ async def google_login():
     # TODO return token if yes
     # TODO make user and return token if no
 
-    return {'token': 'yes'}
+    return {'token': '3'}, 200
 
 # User info endpoint
 
 
-@application.route('api/get_user_info', methods=['GET'])
-async def get_user_info():
+@application.route('/api/get_user_info', methods=['GET'])
+async def user_info():
     headers = request.headers
 
     # TODO decode token, if valid and user exists
+    id = int(headers.get("Authorization"))
+
+    if id != 3:
+        return '', 401
+
     # TODO return user info
     # TODO else return error code
 
     async with async_session() as session:
         session: AsyncSession
-        sites = await get_tourist_sites(session)
+        sites = await get_user_info(session, id)
 
 ###### IMAGE SERVER HANDLERS ######
 
