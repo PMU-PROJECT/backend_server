@@ -1,4 +1,5 @@
 from sqlalchemy.schema import Column
+from sqlalchemy.sql.functions import now
 from sqlalchemy.types import DateTime
 
 from . import ORMBase, id_ref_column
@@ -18,4 +19,5 @@ class RewardsLog(ORMBase):
         'reward_id', Rewards.id, options={
             'primary_key': True, }, )
 
-    given_on = Column('given_on', DateTime(timezone=True, ), )
+    given_on = Column('given_on', DateTime(
+        timezone=True, ), server_default=now, )
