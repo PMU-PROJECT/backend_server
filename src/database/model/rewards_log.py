@@ -20,4 +20,4 @@ class RewardsLog(ORMBase):
             'primary_key': True, }, )
 
     given_on = Column('given_on', DateTime(
-        timezone=True, ), server_default=now, )
+        timezone=True, ), server_default=now(), )
