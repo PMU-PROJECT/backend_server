@@ -1,7 +1,7 @@
 from typing import Any, Dict, Union
 
-from postgresql.types import Row
 from sqlalchemy import select
+from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .model.users import Users as UsersModel
