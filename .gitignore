@@ -146,15 +146,25 @@ utils/__pycache__/constant_variables.cpython-37.pyc
 utils/__pycache__/users.cpython-37.pyc
 utils/'__pycache__'
 
-#local data files
+# Local data files
 *.csv
 
-#Google Sheets connection
+# Google Sheets connection
 sheets_client_secret.json
 
-#RavenDB certificate
+# RavenDB certificate
 *.crt
 *.key
 
-#VSCode 
+# VSCode
 *.code-workspace
+
+# IntelliJ IDEs
+.idea/
+
+# Photos
+*.png
+*.jpg
+
+# API Secrets
+**/*secret*.json
