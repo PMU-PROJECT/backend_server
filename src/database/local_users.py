@@ -1,7 +1,7 @@
 from typing import Union, Tuple
 
+from sqlalchemy import select, literal, asc, literal_column
 from sqlalchemy.engine import Row
-from sqlalchemy import select, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .model.local_users import LocalUsers as LocalUsersModel
@@ -15,6 +15,11 @@ class LocalUsers:
             await session.execute(
                 select(
                     [
+                        literal(
+                            0,
+                        ).label(
+                            'record',
+                        ),
                         UsersModel.id,
                         LocalUsersModel.pw_hash,
                     ],
@@ -26,12 +31,27 @@ class LocalUsers:
                 ).union(
                     select(
                         [
-                            literal(None, ),
-                            literal(b'', ),
+                            literal(
+                                1,
+                            ),
+                            literal(
+                                None,
+                            ),
+                            literal(
+                                b'',
+                            ),
                         ],
                     ),
-                ).limit(1),
+                ).limit(
+                    1,
+                ).order_by(
+                    asc(
+                        literal_column(
+                            'record',
+                        ),
+                    ),
+                ),
             )
         ).one()
 
-        return result[0], result[1]
+        return result[1], result[2]
