@@ -214,11 +214,11 @@ async def tourist_site_photo():
     based on an 'name' arg, send back a photo from public/tourist_sites folder.
     Requires Authorization header
     '''
-    args = request.args
+    name = request.args.get('name')
 
-    if args.get('name') is not None:
+    if name is not None:
         file_path = os.path.join(
-            'public', 'tourist_sites', args.get('pic_name'))
+            'public', 'tourist_sites', name)
 
         if path.isfile(file_path):
             return await send_file(file_path, mimetype='image/gif')
@@ -230,11 +230,11 @@ async def tourist_site_photo():
 
 @application.route('/imageserver/profile_pictures', methods=['GET'])
 async def profile_pictures():
-    args = request.args
+    name = request.args.get('name')
 
-    if args.get('name') is not None:
+    if name is not None:
         file_path = os.path.join(
-            'public', 'profile_pictures', args.get('pic_name'))
+            'public', 'profile_pictures', name)
 
         if path.isfile(file_path):
             return await send_file(file_path, mimetype='image/gif')
