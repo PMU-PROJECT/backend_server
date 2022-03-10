@@ -5,19 +5,23 @@ from typing import List
 
 # Dependency imports
 from quart import Quart, request, send_file
-from sqlalchemy.ext.asyncio import AsyncSession
-
 # Own imports
+from sqlalchemy import insert
+
 from .app_logic import get_tourist_sites
-from .auth import AuthenticationError, validate_token, verify_password, generate_token
+from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
 from .database import db_init, async_session
 from .database.local_users import LocalUsers
+from .database.model.local_users import LocalUsers as LocalUsersModel
+from .database.model.users import Users as UsersModel
+from .database.users import Users
 from .google_api import google_api
 from .utils.enviromental_variables import PORT
 
 UNAUTHENTICATED_URLS: List[str] = [
     '/api/login',
+    '/api/registration',
     '/api/oauth2/google',
 ]
 
@@ -54,7 +58,6 @@ async def get_all_sites():
     logger.debug("User requested all site info")
 
     async with async_session() as session:
-        session: AsyncSession
         sites = await get_tourist_sites(session)
 
     return sites, 200
@@ -69,7 +72,6 @@ async def get_site_info():
     logger.debug("User requested site detailed info")
 
     async with async_session() as session:
-        session: AsyncSession
         site = {'site': None}  # TODO change
 
     return site, 200
@@ -80,7 +82,7 @@ async def get_site_info():
 
 @application.route('/api/registration', methods=['POST'])
 async def registration():
-    form = request.json
+    form = await request.json
 
     first_name = form.get('first_name')
     last_name = form.get('last_name')
@@ -90,10 +92,38 @@ async def registration():
     if None in (first_name, last_name, email, password):
         return 'insufficient information', 422
 
-    # TODO request to DB for registration
-    # TODO generate JWT token and return it
+    async with async_session() as session:
+        if await Users.exists_by_email(session, email):
+            return {'error': 'User with this email already exists!'}, 400
 
-    return {'token': 'yes'}
+        user_id: int = (
+            await session.execute(
+                insert(
+                    UsersModel,
+                ).values(
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                ).returning(
+                    UsersModel.id,
+                ),
+            )
+        ).scalar()
+
+        await session.execute(
+            insert(
+                LocalUsersModel,
+            ).values(
+                user_id=user_id,
+                pw_hash=hash_password(password),
+            ),
+        )
+
+        await session.commit()
+
+        return {
+                   'token': generate_token(user_id, ),
+               }, 200
 
 
 @application.route('/api/login', methods=['POST'])
@@ -119,7 +149,7 @@ async def login():
 
 @application.route('/api/google_login', methods=['POST'])
 async def google_login():
-    form = request.json
+    form = await request.json
 
     google_token = form.get('token')
     password = form.get('password')
@@ -149,7 +179,6 @@ async def get_user_info():
     # TODO else return error code
 
     async with async_session() as session:
-        session: AsyncSession
         sites = await get_tourist_sites(session)
 
 

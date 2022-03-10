@@ -19,5 +19,8 @@ class Users(ORMBase):
         UniqueConstraint(),
     )
 
-    profile_picture = Column('profile_picture', String(
-        127), default='default_profile_pic.png')
+    profile_picture = Column(
+        'profile_picture',
+        String(127, ),
+        default='default_profile_pic.png',
+    )

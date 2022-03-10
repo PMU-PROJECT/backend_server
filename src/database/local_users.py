@@ -27,7 +27,7 @@ class LocalUsers:
                     select(
                         [
                             literal(None, ),
-                            literal('', ),
+                            literal(b'', ),
                         ],
                     ),
                 ).limit(1),
