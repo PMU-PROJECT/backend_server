@@ -13,9 +13,10 @@ The app runs on port 37888
 ## Running the app
 
 **Google**
-Create a google API account
-Create a client secret
-put client_secret.json in root project folder
+
+- Create a google API account
+- Create a client secret
+- put client_secret.json in root project folder
 
 **Database**
 
