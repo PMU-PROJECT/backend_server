@@ -73,7 +73,7 @@ async def get_site_info():
     async with async_session() as session:
         site = await get_site_by_id(session, int(args.get("id")))
 
-    return site, 200
+    return (site, 200) if site is not None else ({"error": "Site not found"}, 404)
 
 
 # Login and registration endpoints
@@ -147,9 +147,9 @@ async def login():
         if verify_password(password, pw_hash):
             return {
                 'token': generate_token(user_id),
-            }
+            }, 200
 
-        # TODO return unsuccesful login
+        # returns 400 error
         raise AuthenticationError()
 
 

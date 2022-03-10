@@ -7,7 +7,6 @@ from .database.places import Places
 from .database.users import Users
 from .database.stamps import Stamps
 from .database.administrators import Administrators
-from src.database import users
 
 
 async def get_tourist_sites(session: AsyncSession):
@@ -26,21 +25,15 @@ async def get_tourist_sites(session: AsyncSession):
 
     for site in sites_db:
         current_site = {}
-        # lists
-        current_site['images'] = await Images.all_by_place(session, site.get('id'))
-        current_site['employees'] = await Employees.all_by_place(session, site.get('id'))
 
-        # Make latitude and longitude JSON serializable
-        current_site['latitude'] = json.dumps(
-            site['latitude'], use_decimal=True)
-        current_site['longitude'] = json.dumps(
-            site['longitude'], use_decimal=True)
+        # get only 1 image for visualisation of the card
+        current_site['image'] = (await Images.all_by_place(session, site.get('id')))[0]
 
         # Other variables
         current_site['region'] = site['name']
         current_site['city'] = site['name_1']
         current_site['name'] = site['name_2']
-        current_site['description'] = site['description']
+        #current_site['description'] = site['description']
 
         # append the dictionary in the list after writing all the vars
         sites_jsonable['sites'].append(current_site)
@@ -55,7 +48,7 @@ async def get_site_by_id(session: AsyncSession, id: int):
     site = await Places.by_id(session, id)
 
     if site is None:
-        return {}
+        return None
 
     current_site = {}
 
