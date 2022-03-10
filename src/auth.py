@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import List
 
-from nacl.exceptions import CryptoError
+from nacl.exceptions import CryptoError, InvalidkeyError
 from nacl.public import SealedBox, PrivateKey, PublicKey
 from nacl.pwhash.argon2id import str as argon2id, verify as verify_argon2id
 from nacl.utils import random as random_bytes
@@ -24,7 +24,7 @@ def hash_password(password: str) -> bytes:
 def verify_password(password: str, password_hash: bytes) -> bool:
     try:
         return verify_argon2id(password_hash, password.encode('utf-8'))
-    except TypeError:
+    except (TypeError, InvalidkeyError):
         return False
 
 
