@@ -12,7 +12,12 @@ The app runs on port 37888
 
 ## Running the app
 
-**database**
+**Google**
+Create a google API account
+Create a client secret
+put client_secret.json in root project folder
+
+**Database**
 
 allow connection from all IPs (to allow docker hypercorn container to run)
 - In installdir/data/pg_hba.conf, insert
