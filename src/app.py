@@ -5,15 +5,15 @@ from typing import List
 
 # Dependency imports
 from quart import Quart, request, send_file
-# Own imports
 from sqlalchemy import insert
+from sqlalchemy.exc import IntegrityError
 
-from .app_logic import get_tourist_sites
+# Own imports
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
 from .database import db_init, async_session
 from .utils.enviromental_variables import PORT
-from src.app_logic import get_site_by_id, get_tourist_sites, get_user_info
+from .app_logic import get_site_by_id, get_tourist_sites, get_user_info
 from .database.local_users import LocalUsers
 from .database.model.local_users import LocalUsers as LocalUsersModel
 from .database.model.users import Users as UsersModel
@@ -30,13 +30,15 @@ UNAUTHENTICATED_URLS: List[str] = [
 application = Quart(__name__)
 
 application.before_serving(db_init)
-application.register_error_handler(AuthenticationError, lambda _: ({'error': 'Authentication failed!', }, 401,))
+application.register_error_handler(AuthenticationError, lambda _: (
+    {'error': 'Authentication failed!', }, 401,))
 
 
 @application.before_request
 def auth_before_request():
     if request.path not in UNAUTHENTICATED_URLS:
-        request.authenticated_user = validate_token(request.headers.get('Authorization', None))
+        request.authenticated_user = validate_token(
+            request.headers.get('Authorization', None))
 
 
 @application.route('/api/oauth2/google', methods=['GET'])
@@ -50,14 +52,9 @@ async def google_oauth2():
 
 # Tourist site endpoints
 
+
 @application.route('/api/get_all_sites', methods=['GET'])
 async def get_all_sites():
-    args = request.args
-    headers = request.headers
-
-    # TODO check token
-    if int(headers.get("Authorization")) != 3:
-        return '', 401
 
     logger.debug("User requested all site info")
 
@@ -70,13 +67,6 @@ async def get_all_sites():
 @application.route('/api/get_site_info', methods=['GET'])
 async def get_site_info():
     args = request.args
-    headers = request.headers
-
-    print(f"token: {headers.get('Authorization')}")
-
-    # TODO check token
-    if int(headers.get("Authorization")) != 3:
-        return '', 401
 
     logger.debug("User requested site detailed info")
 
@@ -99,25 +89,31 @@ async def registration():
     password = form.get('password')
 
     if None in (first_name, last_name, email, password):
-        return 'insufficient information', 422
+        return {'error': 'insufficient information'}, 422
+
+    if len(password) < 6:
+        return {'error': 'Password too short. It must be 6 characters or longer'}, 400
 
     async with async_session() as session:
         if await Users.exists_by_email(session, email):
             return {'error': 'User with this email already exists!'}, 400
 
-        user_id: int = (
-            await session.execute(
-                insert(
-                    UsersModel,
-                ).values(
-                    first_name=first_name,
-                    last_name=last_name,
-                    email=email,
-                ).returning(
-                    UsersModel.id,
-                ),
-            )
-        ).scalar()
+        try:
+            user_id: int = (
+                await session.execute(
+                    insert(
+                        UsersModel,
+                    ).values(
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                    ).returning(
+                        UsersModel.id,
+                    ),
+                )
+            ).scalar()
+        except IntegrityError:
+            return {"error": "Email not valid"}, 400
 
         await session.execute(
             insert(
@@ -131,8 +127,8 @@ async def registration():
         await session.commit()
 
         return {
-                   'token': generate_token(user_id, ),
-               }, 200
+            'token': generate_token(user_id, ),
+        }, 200
 
 
 @application.route('/api/login', methods=['POST'])
@@ -143,7 +139,7 @@ async def login():
     password = form.get('password')
 
     if None in (email, password):
-        return 'insufficient information', 422
+        return {"error": "Insufficient information"}, 422
 
     async with async_session() as session:
         user_id, pw_hash = await LocalUsers.by_email(session, email)
@@ -153,6 +149,7 @@ async def login():
                 'token': generate_token(user_id),
             }
 
+        # TODO return unsuccesful login
         raise AuthenticationError()
 
 
@@ -172,25 +169,15 @@ async def google_login():
     # TODO return token if yes
     # TODO make user and return token if no
 
-    return {'token': '3'}, 200
+    return {'token': 'yes'}, 200
 
 
 # User info endpoint
 @application.route('/api/get_user_info', methods=['GET'])
 async def user_info():
-    headers = request.headers
-
-    # TODO decode token, if valid and user exists
-    id = int(headers.get("Authorization"))
-
-    if id != 3:
-        return '', 401
-
-    # TODO return user info
-    # TODO else return error code
+    id = request.authenticated_user
 
     async with async_session() as session:
-        session: AsyncSession
         user = await get_user_info(session, id)
 
     return user
@@ -202,47 +189,37 @@ async def user_info():
 @application.route('/imageserver/tourist_sites', methods=['GET'])
 async def tourist_site_photo():
     '''
-    based on an 'pic_name' arg, send back a photo from public/tourist_sites folder.
-    Requires Auth token
+    based on an 'name' arg, send back a photo from public/tourist_sites folder.
+    Requires Authorization header
     '''
     args = request.args
-    headers = request.headers
 
-    # TODO check token
-    if headers.get('Authorization') is None:
-        return '', 401
-
-    if args.get('pic_name') is not None:
+    if args.get('name') is not None:
         file_path = os.path.join(
             'public', 'tourist_sites', args.get('pic_name'))
 
         if path.isfile(file_path):
             return await send_file(file_path, mimetype='image/gif')
         else:
-            return '', 404
+            return {"error": "Picture not found"}, 404
 
-    return '', 200
+    return {"error": "Insufficient information!"}, 422
 
 
 @application.route('/imageserver/profile_pictures', methods=['GET'])
 async def profile_pictures():
     args = request.args
-    headers = request.headers
 
-    # TODO check token
-    if headers.get('Authorization') is None:
-        return '', 401
-
-    if args.get('pic_name') is not None:
+    if args.get('name') is not None:
         file_path = os.path.join(
             'public', 'profile_pictures', args.get('pic_name'))
 
         if path.isfile(file_path):
             return await send_file(file_path, mimetype='image/gif')
         else:
-            return '', 404
+            return {"error": "Picture not found"}, 404
 
-    return '', 200
+    return {"error": "Insufficient information!"}, 422
 
 
 # ###### WEB SERVER START ######
