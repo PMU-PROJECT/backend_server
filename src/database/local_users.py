@@ -1,6 +1,6 @@
 from typing import Union, Tuple
 
-from postgresql.types import Row
+from sqlalchemy.engine import Row
 from sqlalchemy import select, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
