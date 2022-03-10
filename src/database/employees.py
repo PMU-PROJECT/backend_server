@@ -13,16 +13,29 @@ from .model.users import Users as UsersModel
 class Employees(object):
     @staticmethod
     async def exists(session: AsyncSession, user_id: int) -> bool:
+        '''
+        Method for detirmining if an employee exists in the database
+
+        params:
+            session : AsyncSession -> connection to the database
+            user_id : int -> id of the employee
+        returns:
+            bool : employee is or is not in DB
+        throws:
+            ValueError: user_id not int
+        '''
+        user_id = int(user_id)
+
         return bool(
             (
                 await session.execute(
                     select(literal(True))
-                        .where(
+                    .where(
                         select(EmployeesModel)
-                            .where(
+                        .where(
                             EmployeesModel.id == user_id,
                         )
-                            .exists(),
+                        .exists(),
                     )
                 )
             ).scalar()
@@ -38,6 +51,7 @@ class Employees(object):
                 UsersModel.profile_picture,
                 EmployeesModel.added_by,
                 EmployeesModel.can_reward,
+                EmployeesModel.place_id
             ],
             from_obj=EmployeesModel,
         ).join(
@@ -66,7 +80,7 @@ class Employees(object):
                 await (
                     await session.stream(
                         Employees.__query()
-                            .where(
+                        .where(
                             EmployeesModel.place_id == place_id
                         ),
                     )
