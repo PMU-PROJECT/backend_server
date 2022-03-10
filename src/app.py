@@ -12,6 +12,8 @@ from .app_logic import get_tourist_sites
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
 from .database import db_init, async_session
+from .utils.enviromental_variables import PORT
+from src.app_logic import get_site_by_id, get_tourist_sites, get_user_info
 from .database.local_users import LocalUsers
 from .database.model.local_users import LocalUsers as LocalUsersModel
 from .database.model.users import Users as UsersModel
@@ -44,7 +46,6 @@ async def google_oauth2():
 
     raise AuthenticationError()
 
-
 # ###### API REQUEST HANDLERS ######
 
 # Tourist site endpoints
@@ -53,7 +54,10 @@ async def google_oauth2():
 async def get_all_sites():
     args = request.args
     headers = request.headers
+
     # TODO check token
+    if int(headers.get("Authorization")) != 3:
+        return '', 401
 
     logger.debug("User requested all site info")
 
@@ -67,12 +71,17 @@ async def get_all_sites():
 async def get_site_info():
     args = request.args
     headers = request.headers
+
+    print(f"token: {headers.get('Authorization')}")
+
     # TODO check token
+    if int(headers.get("Authorization")) != 3:
+        return '', 401
 
     logger.debug("User requested site detailed info")
 
     async with async_session() as session:
-        site = {'site': None}  # TODO change
+        site = await get_site_by_id(session, int(args.get("id")))
 
     return site, 200
 
@@ -152,7 +161,6 @@ async def google_login():
     form = await request.json
 
     google_token = form.get('token')
-    password = form.get('password')
 
     if google_token is None:
         return 'insufficient information', 422
@@ -164,22 +172,28 @@ async def google_login():
     # TODO return token if yes
     # TODO make user and return token if no
 
-    return {'token': 'yes'}
+    return {'token': '3'}, 200
 
 
 # User info endpoint
-
-
 @application.route('/api/get_user_info', methods=['GET'])
-async def get_user_info():
+async def user_info():
     headers = request.headers
 
     # TODO decode token, if valid and user exists
+    id = int(headers.get("Authorization"))
+
+    if id != 3:
+        return '', 401
+
     # TODO return user info
     # TODO else return error code
 
     async with async_session() as session:
-        sites = await get_tourist_sites(session)
+        session: AsyncSession
+        user = await get_user_info(session, id)
+
+    return user
 
 
 # ###### IMAGE SERVER HANDLERS ######
