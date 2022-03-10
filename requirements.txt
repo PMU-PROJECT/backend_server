@@ -7,3 +7,4 @@ PyNaCl~=1.5.0
 simplejson~=3.17.6
 google_auth_oauthlib~=0.5.0
 google_api_python_client~=2.39.0
+Quart-CORS~=0.5.0

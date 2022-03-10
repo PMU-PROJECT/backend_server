@@ -7,8 +7,7 @@ from typing import List
 from quart import Quart, request, send_file
 from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
-
-from src.database.employees import Employees
+from quart_cors import cors
 
 # Own imports
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
@@ -21,7 +20,6 @@ from .database.model.local_users import LocalUsers as LocalUsersModel
 from .database.model.users import Users as UsersModel
 from .database.users import Users
 from .google_api import google_api
-from .utils.enviromental_variables import PORT
 
 UNAUTHENTICATED_URLS: List[str] = [
     '/api/login',
@@ -30,6 +28,10 @@ UNAUTHENTICATED_URLS: List[str] = [
 ]
 
 application = Quart(__name__)
+application = cors(application,
+                   allow_origin="*",
+                   allow_headers=['Authorization', 'Content-type'],
+                   allow_methods=['GET', 'POST'])
 
 application.before_serving(db_init)
 application.register_error_handler(AuthenticationError, lambda _: (
@@ -141,6 +143,9 @@ async def registration():
 @application.route('/api/login', methods=['POST'])
 async def login():
     form = await request.json
+
+    if form is None:
+        return {"error": "Wrong request body!"}
 
     email = form.get('email')
     password = form.get('password')
