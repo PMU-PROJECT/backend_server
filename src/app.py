@@ -8,9 +8,10 @@ from typing import List
 from quart import Quart, request, send_file, g
 from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
+from quart_cors import cors
 
-from .app_logic import get_employee_info, get_site_by_id, get_tourist_sites, get_user_info
 # Own imports
+from .app_logic import get_employee_info, get_site_by_id, get_tourist_sites, get_user_info
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
 from .database import db_init, async_session
@@ -28,6 +29,12 @@ UNAUTHENTICATED_URLS: List[str] = [
 ]
 
 application = Quart(__name__, )
+application = cors(
+    application,
+    allow_origin="*",
+    allow_headers=['Authorization', 'Content-type', ],
+    allow_methods=['GET', 'POST', ],
+)
 
 application.before_serving(db_init, )
 application.register_error_handler(
@@ -136,6 +143,9 @@ async def registration():
 @application.route('/api/login', methods=['POST', ], )
 async def login():
     form = await request.form
+
+    if form is None:
+        return {"error": "Wrong request body!"}
 
     email = form.get('email', type=str, )
     password = form.get('password', type=str, )
