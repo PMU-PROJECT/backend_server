@@ -83,12 +83,29 @@ async def get_user_info(session: AsyncSession, id: int):
         return None
 
     # Needed requests
-    stamps = await Stamps.all(session, id)
-    employee_info = await Employees.by_id(session, id)
-    is_admin = await Administrators.exists(session, id)
+    user['stamps'] = await Stamps.all(session, id)
+    user['employee_info'] = await Employees.by_id(session, id)
+    user['is_admin'] = bool(await Administrators.exists(session, id))
 
-    user['stamps'] = stamps
-    user['employee_info'] = employee_info
-    user['is_admin'] = bool(is_admin)
+    if user.get('employee_info') is not None:
+        user['employee_info']['added_by'] = await Users.by_id(session, int(user['employee_info'].get('added_by')))
 
     return user
+
+
+async def get_employee_info(session: AsyncSession, id: int):
+    '''
+    Function for getting employee info
+    '''
+
+    employee_info = await Employees.by_id(session, id)
+
+    # if None, no point in continuing
+    if employee_info is None:
+        return None
+
+    # Needed requests
+    employee_info['is_admin'] = bool(await Administrators.exists(session, id))
+    employee_info['added_by'] = await Users.by_id(session, int(employee_info.get('added_by')))
+
+    return employee_info

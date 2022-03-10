@@ -8,12 +8,14 @@ from quart import Quart, request, send_file
 from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
 
+from src.database.employees import Employees
+
 # Own imports
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
 from .database import db_init, async_session
 from .utils.enviromental_variables import PORT
-from .app_logic import get_site_by_id, get_tourist_sites, get_user_info
+from .app_logic import get_employee_info, get_site_by_id, get_tourist_sites, get_user_info
 from .database.local_users import LocalUsers
 from .database.model.local_users import LocalUsers as LocalUsersModel
 from .database.model.users import Users as UsersModel
@@ -36,9 +38,14 @@ application.register_error_handler(AuthenticationError, lambda _: (
 
 @application.before_request
 def auth_before_request():
+    '''
+    '''
     if request.path not in UNAUTHENTICATED_URLS:
-        request.authenticated_user = validate_token(
-            request.headers.get('Authorization', None))
+        try:
+            request.authenticated_user = int(validate_token(
+                request.headers.get('Authorization', None)))
+        except ValueError:
+            raise AuthenticationError()
 
 
 @application.route('/api/oauth2/google', methods=['GET'])
@@ -173,14 +180,29 @@ async def google_login():
 
 
 # User info endpoint
-@application.route('/api/get_user_info', methods=['GET'])
-async def user_info():
+
+@application.route('/api/get_self_info', methods=['GET'])
+async def self_info():
     id = request.authenticated_user
 
     async with async_session() as session:
         user = await get_user_info(session, id)
 
     return user
+
+
+@application.route('/api/get_user_info', methods=['GET'])
+async def user_info():
+    id = request.args.get('id')
+
+    if id is None:
+        return {"error": "Insufficient information"}, 422
+
+    id = int(id)
+
+    async with async_session() as session:
+        employee = await get_employee_info(session, id)
+        return (employee, 200) if employee is not None else ({"error": "Employee doesn't exist!"}, 404)
 
 
 # ###### IMAGE SERVER HANDLERS ######
