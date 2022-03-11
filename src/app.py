@@ -100,7 +100,15 @@ async def registration():
     password = form.get('password', type=str, )
 
     if None in (first_name, last_name, email, password,):
-        return {'error': 'insufficient information', }, 422
+        return {
+            'error': 'insufficient information',
+            'expected': [
+                'first_name',
+                'last_name',
+                'email',
+                'password',
+            ],
+        }, 422
 
     if len(password, ) < 6:
         return {'error': 'Password too short. It must be 6 characters or longer', }, 400
