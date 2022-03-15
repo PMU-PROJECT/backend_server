@@ -51,4 +51,17 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
 
 - `/api/register` [POST]
 
-    The request expects the parameters:
+    The request expects the parameters as a form:
+    - `first_name`
+    - `last_name`
+    - `email` -> valid email syntax
+    - `password` -> 6 characters or more
+
+    Upon succesful registration, the server returns a JSON token with 3 hours validity:
+    ```
+    {
+        "token" = "long JWT token"
+    }
+    ```
+
+- `/api.login` [POST]
