@@ -21,7 +21,7 @@ from .database.model.users import Users as UsersModel
 from .database.users import Users
 from .google_api import google_api
 from .utils.enviromental_variables import PORT
-from .utils.all_sites_types import AllSitesTypes
+from .utils.all_sites_filter import AllSitesFilter
 
 UNAUTHENTICATED_URLS: List[str] = [
     '/api/login',
@@ -68,14 +68,31 @@ def auth_before_request():
 
 @application.route('/api/get_all_sites', methods=['GET', ], )
 async def get_all_sites():
+    """
+    Function for getting basic info on many sites.
 
-    site_type = request.args.get('type', type=str, )
+    params:
+        arg 'filter' : str -> all, visited or unvisited
+
+    returns JSON list containing:
+    'sites' : [
+        {
+            'city':str,
+            'image':str,
+            'name':str,
+            'region':str
+        },
+    ]
+    """
+
+    site_type = request.args.get('filter', type=str, )
 
     try:
-        site_type = AllSitesTypes(site_type)
+        site_type = AllSitesFilter(site_type)
     except ValueError:
+        # TODO make expected synced with ENUM
         return {"error": "Incorrect information",
-                "expected": "'type' : 'all' / 'visited' / 'unvisited' as an argument"}, 400
+                "expected": "'filter' : 'all' / 'visited' / 'unvisited' as an argument"}, 400
 
     logger.debug("User requested all site info", )
 
@@ -87,6 +104,11 @@ async def get_all_sites():
 
 @application.route('/api/get_site_info', methods=['GET', ], )
 async def get_site_info():
+    """
+    Get detailed info on a certain tourist site
+
+    arg 'id' : int -> place_id of needed site
+    """
     site_id = request.args.get('id', type=int, )
 
     logger.debug("User requested site detailed info", )

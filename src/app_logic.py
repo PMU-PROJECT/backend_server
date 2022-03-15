@@ -2,7 +2,7 @@ from ast import Not
 import simplejson as json
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .utils.all_sites_types import AllSitesTypes
+from .utils.all_sites_filter import AllSitesFilter
 from .database.employees import Employees
 from .database.images import Images
 from .database.places import Places
@@ -11,7 +11,7 @@ from .database.stamps import Stamps
 from .database.administrators import Administrators
 
 
-async def get_tourist_sites(session: AsyncSession, type: AllSitesTypes, visitor_id: int):
+async def get_tourist_sites(session: AsyncSession, type: AllSitesFilter, visitor_id: int):
     '''
     Function for creating a JSON-able dictionary, containing data for all the tourist sites in the Database.
     Includes Place, City, Region, connected Images and connected Employee ID's
@@ -35,12 +35,12 @@ async def get_tourist_sites(session: AsyncSession, type: AllSitesTypes, visitor_
     for site in sites_db:
 
         # Skip all unvisited
-        if type == AllSitesTypes.visited:
+        if type == AllSitesFilter.visited:
             if site.get('id') not in stamp_places_id:
                 continue
 
         # Skip all visited
-        if type == AllSitesTypes.unvisited:
+        if type == AllSitesFilter.unvisited:
             if site.get('id') in stamp_places_id:
                 continue
 

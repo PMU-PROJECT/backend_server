@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class AllSitesTypes(Enum):
+class AllSitesFilter(Enum):
     """
     Supported arguments for all_sites endpoint
     """
