@@ -1,6 +1,8 @@
+from ast import Not
 import simplejson as json
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .utils.all_sites_types import AllSitesTypes
 from .database.employees import Employees
 from .database.images import Images
 from .database.places import Places
@@ -9,21 +11,39 @@ from .database.stamps import Stamps
 from .database.administrators import Administrators
 
 
-async def get_tourist_sites(session: AsyncSession):
+async def get_tourist_sites(session: AsyncSession, type: AllSitesTypes, visitor_id: int):
     '''
     Function for creating a JSON-able dictionary, containing data for all the tourist sites in the Database.
     Includes Place, City, Region, connected Images and connected Employee ID's
 
     params:
         session : AsyncSession -> Session to the database
+        type : AllSitesTypes -> list of what sites should be returned
+        visitor_id : int -> user_id in the database, to whom we will compare the visited and unvisited sites
 
     returns:
         dictionary, with a key value 'sites' and value a list, containing the tourist sites
     '''
     sites_db = await Places.all(session)
+
+    # get place_id of visited sites
+    stamps_db = await Stamps.all(session, visitor_id)
+    stamp_places_id = [stamp['place_id'] for stamp in stamps_db]
+
     sites_jsonable = {'sites': []}
 
     for site in sites_db:
+
+        # Skip all unvisited
+        if type == AllSitesTypes.visited:
+            if site.get('id') not in stamp_places_id:
+                continue
+
+        # Skip all visited
+        if type == AllSitesTypes.unvisited:
+            if site.get('id') in stamp_places_id:
+                continue
+
         current_site = {}
 
         # get only 1 image for visualisation of the card

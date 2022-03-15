@@ -21,6 +21,7 @@ from .database.model.users import Users as UsersModel
 from .database.users import Users
 from .google_api import google_api
 from .utils.enviromental_variables import PORT
+from .utils.all_sites_types import AllSitesTypes
 
 UNAUTHENTICATED_URLS: List[str] = [
     '/api/login',
@@ -40,7 +41,7 @@ application.before_serving(db_init, )
 application.register_error_handler(
     AuthenticationError,
     lambda _: (
-        {'error': 'Authentication failed!', }, 401,
+        {'error': 'Authentication failed!', }, 401
     ),
 )
 
@@ -53,8 +54,8 @@ def auth_before_request():
         try:
             g.authenticated_user = int(
                 validate_token(
-                    request.headers.get('Authorization', None, ),
-                ),
+                    request.headers.get('Authorization', None, )
+                )
             )
         except ValueError:
             raise AuthenticationError()
@@ -67,10 +68,19 @@ def auth_before_request():
 
 @application.route('/api/get_all_sites', methods=['GET', ], )
 async def get_all_sites():
+
+    site_type = request.args.get('type', type=str, )
+
+    try:
+        site_type = AllSitesTypes(site_type)
+    except ValueError:
+        return {"error": "Incorrect information",
+                "expected": "'type' : 'all' / 'visited' / 'unvisited' as an argument"}, 400
+
     logger.debug("User requested all site info", )
 
     async with async_session() as session:
-        sites = await get_tourist_sites(session, )
+        sites = await get_tourist_sites(session, site_type, g.authenticated_user)
 
     return sites, 200
 
@@ -82,7 +92,7 @@ async def get_site_info():
     logger.debug("User requested site detailed info", )
 
     async with async_session() as session:
-        site = await get_site_by_id(session, site_id, )
+        site = await get_site_by_id(session, site_id)
 
     return (site, 200) if site is not None else ({"error": "Site not found", }, 404)
 
@@ -205,7 +215,7 @@ async def user_info():
 
     async with async_session() as session:
         employee = await get_employee_info(session, user_id, )
-        return ({"error": "Employee doesn't exist!", }, 404,) if employee is None else (employee, 200,)
+        return ({"error": "Employee doesn't exist!", }, 404) if employee is None else (employee, 200)
 
 
 # ###### IMAGE SERVER HANDLERS ######
@@ -221,7 +231,7 @@ async def tourist_site_photo():
 
     if name is not None:
         if match(r'^[\w\s_+\-()]([\w\s_+\-().])+$', name) is None:
-            return {"error": "Invalid site name!", }, 400
+            return {"error": "Invalid site picture!", }, 400
 
         file_path = os.path.join(
             'public',
@@ -239,16 +249,19 @@ async def tourist_site_photo():
 
 @application.route('/imageserver/profile_pictures', methods=['GET', ], )
 async def profile_pictures():
-    name = request.args.get('name', )
+    name = request.args.get('name', type=str, )
 
     if name is not None:
+        if match(r'^[\w\s_+\-()]([\w\s_+\-().])+$', name) is None:
+            return {"error": "Invalid site picture!", }, 400
+
         file_path = os.path.join(
             'public',
             'profile_pictures',
             name,
         )
 
-        if path.isfile(file_path, ):
+        if path.isfile(file_path):
             return await send_file(file_path, mimetype='image/gif', )
         else:
             return {"error": "Picture not found", }, 404
