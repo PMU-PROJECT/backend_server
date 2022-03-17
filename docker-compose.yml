@@ -8,3 +8,5 @@ services:
     ports:
       - 37888:37888
       - 5432:5432
+    environment:
+      - IN_PROD=True

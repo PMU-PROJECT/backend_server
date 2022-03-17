@@ -6,9 +6,11 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip3 install -r requirements.txt
+RUN apt update
 
-RUN pip3 install hypercorn
+RUN apt -y install gcc
+
+RUN pip3 install -r requirements.txt
 
 #TODO expose ports based on conf.cfg
 EXPOSE 37888 5432
