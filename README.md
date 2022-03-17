@@ -64,4 +64,177 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
     }
     ```
 
-- `/api.login` [POST]
+    Excepts:
+    - 422 - insuffitient information
+    - 422 - wrong body format
+    - 400 - password check not passed
+    - 400 - email check not passed
+    - 400 - user with that email already exists
+
+- `/api/login` [POST]
+
+    The request expects the parameters as a form:
+    - `email` -> valid email syntax
+    - `password` -> 6 characters or more
+
+    Upon succesful login, the server returns a JSON token with 3 hours validity:
+    ```
+    {
+        "token" = "long JWT token"
+    }
+    ```
+
+    Excepts:
+    - 422 - wrong input format
+    - 422 - insuffitient information
+
+- `/api/oauth2/google` [POST]
+    Currently not functional
+
+- `/api/get_all_sites` [GET]
+
+    the requests expects the parameter as an argument:
+    - `filter` -> all, visited, unvisied
+
+    if filter is valid, returns:
+    ```
+    {
+    "sites": [
+        {
+            "city": str,
+            "image": str,
+            "name": str,
+            "region": str
+        },
+    ]
+    }
+    ```
+
+- `/api/get_site_info` [GET]
+
+    the requests expects the parameter as an argument:
+    - `filter` -> all, visited, unvisied
+
+    if filter is valid, returns:
+    ```
+{
+    "city": str,
+    "description": str,
+    "employees": [ # Only if employees are assigned
+        {
+            "added_by": int,
+            "can_reward": bool,
+            "email": str,
+            "first_name": str,
+            "last_name": str,
+            "place_id": int,
+            "profile_picture": str
+        }
+    ],
+    "images": [
+        str,
+    ],
+    "latitude": str,
+    "longitude": str,
+    "name": str,
+    "region": str
+}
+    ```
+
+- `/api/refresh-token` [POST]
+
+    the request requires header:
+    `Authorization` : valid JWT token
+
+    if token is valid, returns:
+    ```
+    {
+        'token' : 'long JWT token'
+    }
+    ```
+
+- `/api/get_self_info` [GET]
+
+    the request requires header:
+    `Authorization` : valid JWT token
+
+    if token is valid, returns:
+    ```
+    {
+    "email": str,
+    "employee_info": {
+        "added_by": {
+            "email": str,
+            "first_name": str,
+            "last_name": str,
+            "profile_picture": str
+        },
+        "can_reward": bool,
+        "email": str,
+        "first_name": str,
+        "last_name": str,
+        "place_id": int,
+        "profile_picture": str
+    },
+    "first_name": str,
+    "is_admin": bool,
+    "last_name": str,
+    "profile_picture": str,
+    "stamps": [
+        {
+            "employee_id": int,
+            "given_on": str,
+            "place_id": int,
+            "visitor_id": int
+        }
+    ]
+}
+    ```
+
+- `/api/get_user_info` [GET]
+
+    Currenltly you get get info about employees only
+
+    the request requires header:
+    `Authorization` : valid JWT token
+
+    the request requires the param as argument:
+    `id` : user_id
+
+    upon valid JWT token and id, returns:
+    ```
+    {
+    "added_by": {
+        "email": str,
+        "first_name": str,
+        "last_name": str,
+        "profile_picture": str
+    },
+    "can_reward": bool,
+    "email": str,
+    "first_name": str,
+    "last_name": str,
+    "is_admin: bool,
+    "place_id": int,
+    "profile_picture": str
+    }
+    ```
+- `/imageserver/tourist_sites` [GET]
+
+    the request requires header:
+    `Authorization` : valid JWT token
+
+    the request requires the param as argument:
+    `name` : picture name **with** extention (.jpg, .png)
+
+    if name and JWT token valid, returns photo
+
+- `/imageserver/profile_pictures` [GET]
+
+    the request requires header:
+    `Authorization` : valid JWT token
+
+    the request requires the param as argument:
+    `name` : picture name **with** extention (.jpg, .png)
+
+    if name and JWT token valid, returns photo

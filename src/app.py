@@ -37,6 +37,7 @@ application = cors(
     allow_methods=['GET', 'POST', ],
 )
 
+# Initialize connection and make tables if not exist
 application.before_serving(db_init, )
 application.register_error_handler(
     AuthenticationError,
@@ -49,6 +50,8 @@ application.register_error_handler(
 @application.before_request
 def auth_before_request():
     """
+    Validates JWT token in Authorization header. Executes before every
+    protected endpoint
     """
     if request.path not in UNAUTHENTICATED_URLS:
         try:
@@ -74,7 +77,7 @@ async def get_all_sites():
     params:
         arg 'filter' : str -> all, visited or unvisited
 
-    returns JSON list containing:
+    returns:
     'sites' : [
         {
             'city':str,
@@ -83,6 +86,10 @@ async def get_all_sites():
             'region':str
         },
     ]
+
+    excepts:
+        401: JWT token not valid
+        400: filter not valid
     """
 
     site_type = request.args.get('filter', type=str, )
@@ -108,6 +115,22 @@ async def get_site_info():
     Get detailed info on a certain tourist site
 
     arg 'id' : int -> place_id of needed site
+
+    returns JSON list:
+        {
+            'city': str,
+            'description': str,
+            'images': list of str,
+            'latitude': num,
+            'longitude': num,
+            'employees': list of users,
+            'name': str,
+            'region': str
+        }
+
+    excepts:
+        401 - JWT token not valid
+        404 - site id doesn't exist
     """
     site_id = request.args.get('id', type=int, )
 
@@ -124,6 +147,25 @@ async def get_site_info():
 
 @application.route('/api/registration', methods=['POST', ], )
 async def registration():
+    """
+    Registration of the user in the Database (not OAuth) and login on success
+
+    Needs as form argument:
+    'first_name'
+    'last_name'
+    'email' -> valid email syntax
+    'password -> 6 or more characters
+
+    returns:
+        'token' : 'long JWT token'
+
+    excepts:
+        422 - insuffitient information
+        422 - wrong body format
+        400 - password check not passed
+        400 - email check not passed
+        400 - user with that email already exists
+    """
     form = await request.form
 
     first_name = form.get('first_name', type=str, )
@@ -182,6 +224,21 @@ async def registration():
 
 @application.route('/api/login', methods=['POST', ], )
 async def login():
+    """
+    Generate token based on email/password
+
+    Expected arguments (in form-data):
+    'email', 'password'
+
+    returns:
+    {
+        'token' : 'long JWT token'
+    }
+
+    excepts:
+        422 - wrong input format
+        422 - insuffitient information
+    """
     form = await request.form
 
     if form is None:
@@ -213,6 +270,17 @@ async def google_oauth2():
 
 @application.route('/api/refresh-token', methods=['GET', ], )
 async def refresh_token():
+    """
+    Generate new token based on old VALID token
+
+    returns:
+    {
+        'token' : 'JWT token'
+    }
+
+    excepts:
+        401 : JWT token not valid
+    """
     return {'token': generate_token(g.authenticated_user, ), }, 200
 
 
@@ -220,6 +288,15 @@ async def refresh_token():
 
 @application.route('/api/get_self_info', methods=['GET', ], )
 async def self_info():
+    """
+    Get information about yourself, based on valid token
+
+    returns:
+        {long json info}
+
+    excepts:
+        401 - not authorized
+    """
     user_id = g.authenticated_user
 
     async with async_session() as session:
@@ -230,6 +307,20 @@ async def self_info():
 
 @application.route('/api/get_user_info', methods=['GET', ], )
 async def user_info():
+    """
+    Get info about an employee, based on ID
+
+    params:
+        id argument -> user_id
+
+    returns:
+        {long info about user}
+
+    excepts:
+        401 - not authorized
+        422 - id argument missing
+        404 - Employee doesn't exist // user isn't employee
+    """
     user_id = request.args.get('id', type=int, )
 
     if user_id is None:
@@ -248,6 +339,18 @@ async def tourist_site_photo():
     """
     based on an 'name' arg, send back a photo from public/tourist_sites folder.
     Requires Authorization header
+
+    params:
+        name -> name of the picture, including the extention (.png, .jpg)
+
+    returns:
+        picture, as a file
+
+    excepts:
+        401 - invalid token
+        404 - picture not found
+        400 - file name not valid
+        422 - name argument missing
     """
     name = request.args.get('name', type=str, )
 
@@ -271,11 +374,30 @@ async def tourist_site_photo():
 
 @application.route('/imageserver/profile_pictures', methods=['GET', ], )
 async def profile_pictures():
+    """
+    Get a profile picture based on name. Currently doesn't check if
+    user has access to that profile pic
+
+    params:
+        name -> name of the picture, including the extention (.png, .jpg)
+
+    returns:
+        picture, as a file
+
+    excepts:
+        401 - invalid token
+        404 - picture not found
+        400 - file name not valid
+        422 - name argument missing
+    """
     name = request.args.get('name', type=str, )
 
     if name is not None:
+        # regex testing if user is trying to access other parts of the OS (with..)
         if match(r'^[\w\s_+\-()]([\w\s_+\-().])+$', name) is None:
             return {"error": "Invalid site picture!", }, 400
+
+        # TODO check if user has access to that photo
 
         file_path = os.path.join(
             'public',
