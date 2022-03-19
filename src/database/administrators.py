@@ -10,13 +10,14 @@ class Administrators(object):
         return bool(
             (
                 await session.execute(
-                    select(literal(True))
-                        .where(
-                        select(AdministratorsModel)
-                            .where(
+                    select(
+                        [literal(True), ],
+                    ).where(
+                        select(
+                            [AdministratorsModel, ],
+                        ).where(
                             AdministratorsModel.id == user_id,
-                        )
-                            .exists(),
+                        ).exists(),
                     )
                 )
             ).scalar()

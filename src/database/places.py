@@ -15,10 +15,10 @@ class Places(object):
     def __query() -> Join:
         return select(
             [
-                RegionsModel.name,
-                CitiesModel.name,
+                RegionsModel.name.label('region_name'),
+                CitiesModel.name.label('city_name'),
                 PlacesModel.id,
-                PlacesModel.name,
+                PlacesModel.name.label('name'),
                 PlacesModel.description,
                 PlacesModel.latitude,
                 PlacesModel.longitude,
@@ -36,8 +36,7 @@ class Places(object):
     async def by_id(session: AsyncSession, place_id: int) -> Union[None, Dict[str, Any]]:
         result: Union[None, Row] = (
             await session.execute(
-                Places.__query()
-                .where(
+                Places.__query().where(
                     PlacesModel.id == place_id,
                 ),
             )
