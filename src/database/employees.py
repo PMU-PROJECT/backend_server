@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Optional
 
 from sqlalchemy import literal
 from sqlalchemy.engine import Row
@@ -13,8 +13,8 @@ from .model.users import Users as UsersModel
 class Employees(object):
     @staticmethod
     async def exists(session: AsyncSession, user_id: int) -> bool:
-        '''
-        Method for detirmining if an employee exists in the database
+        """
+        Method for determining if an employee exists in the database
 
         params:
             session : AsyncSession -> connection to the database
@@ -23,19 +23,20 @@ class Employees(object):
             bool : employee is or is not in DB
         throws:
             ValueError: user_id not int
-        '''
+        """
         user_id = int(user_id)
 
         return bool(
             (
                 await session.execute(
-                    select(literal(True))
-                    .where(
-                        select(EmployeesModel)
-                        .where(
+                    select(
+                        [literal(True), ],
+                    ).where(
+                        select(
+                            [EmployeesModel, ],
+                        ).where(
                             EmployeesModel.id == user_id,
-                        )
-                        .exists(),
+                        ).exists(),
                     )
                 )
             ).scalar()
@@ -60,12 +61,11 @@ class Employees(object):
         )
 
     @staticmethod
-    async def by_id(session: AsyncSession, employee_id: int) -> Union[None, Dict[str, Any]]:
+    async def by_id(session: AsyncSession, employee_id: int) -> Optional[Dict[str, Any]]:
         result: Union[None, Row] = (
             await session.execute(
-                Employees.__query()
-                .where(
-                    EmployeesModel.id == employee_id
+                Employees.__query().where(
+                    EmployeesModel.id == employee_id,
                 ),
             )
         ).first()
@@ -79,9 +79,8 @@ class Employees(object):
                 lambda result: result._asdict(),
                 await (
                     await session.stream(
-                        Employees.__query()
-                        .where(
-                            EmployeesModel.place_id == place_id
+                        Employees.__query().where(
+                            EmployeesModel.place_id == place_id,
                         ),
                     )
                 ).all(),
