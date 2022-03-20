@@ -1,4 +1,4 @@
-version: '3.3'
+version: "3.3"
 
 services:
   web:
@@ -6,7 +6,7 @@ services:
       context: .
     command: hypercorn -b 0.0.0.0:37888 quart_manual_run:application
     ports:
-      - 37888:37888
-      - 5432:5432
+      - "37888:37888"
+      - "5432:5432"
     environment:
       - IN_PROD=True
