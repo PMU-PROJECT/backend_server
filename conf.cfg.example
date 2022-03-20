@@ -5,8 +5,8 @@ port = 37888
 # Change in dockerfile and docker-compose as well
 
 [Database]
-host = host.docker.internal:5432 # For database running on host machine and starting with Docker
-host = localhost:5432 # For development run
+host_prod = host.docker.internal:5432 # For database running on host machine and starting with Docker
+host_dev = localhost:5432 # For development run
 
 user = db_user
 pass = db_pass

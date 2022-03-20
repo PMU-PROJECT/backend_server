@@ -21,7 +21,19 @@ default).
 
 allow connection from all IPs (to allow docker hypercorn container to run)
 
-- In `installdir/data/pg_hba.conf`, insert `host all all samenet scram-sha-256`
+**For Windows PostgreSQL 14**
+- In installdir/data/pg_hba.conf, insert
+- `host all             all              samenet              scram-sha-256`
+
+**For Debian PostgreSQL 13 on ARM64**
+- log in as a postgre user, to see the postgre config files. Type `sudo su postgres` in the terminal
+- coordinate to `/etc/postgresql/13/main`
+- type `nano pg_hba.conf` and add the following line
+- `host all             all              samenet              md5`
+- type `nano postgresql.conf` and find the `listen_adresses` line
+- change the value from `"localhost"` to `"*"` 
+
+Make a Database and a User, able to alter the database
 
 3. **conf.cfg creation**
 

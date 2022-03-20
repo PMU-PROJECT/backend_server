@@ -1,4 +1,4 @@
-version: '3.3'
+version: "3.3"
 
 services:
   web:
@@ -8,3 +8,5 @@ services:
     ports:
       - "37888:37888"
       - "5432:5432"
+    environment:
+      - IN_PROD=True
