@@ -6,11 +6,12 @@ from nacl.public import SealedBox, PrivateKey, PublicKey
 from nacl.pwhash.argon2id import str as argon2id, verify as verify_argon2id
 from nacl.utils import random as random_bytes
 
-
 __secret_key: PrivateKey = PrivateKey(random_bytes())
 __public_key: PublicKey = __secret_key.public_key
 __enc_box: SealedBox = SealedBox(__public_key)
 __dec_box: SealedBox = SealedBox(__secret_key)
+del __secret_key
+del __public_key
 
 
 class AuthenticationError(Exception):
@@ -31,7 +32,7 @@ def verify_password(password: str, password_hash: bytes) -> bool:
 def generate_token(data) -> str:
     return __enc_box.encrypt(
         f"{data}\n{(datetime.utcnow() + timedelta(hours=3)).isoformat()}"
-        .encode('utf-8')
+        f"".encode('utf-8')
     ).hex()
 
 

@@ -1,12 +1,30 @@
 from typing import Any, Dict, List
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.expression import select
+from sqlalchemy.sql.expression import select, insert
 
 from .model.stamps import Stamps as StampsModel
 
 
 class Stamps(object):
+    @staticmethod
+    async def add_stamp(session: AsyncSession, visitor_id: int, employee_id: int, place_id: int) -> bool:
+        try:
+            await session.execute(
+                insert(
+                    StampsModel,
+                ).values(
+                    visitor_id=visitor_id,
+                    place_id=place_id,
+                    employee_id=employee_id,
+                ),
+            )
+        except IntegrityError:
+            return False
+
+        return True
+
     @staticmethod
     async def all(session: AsyncSession, visitor_id: int) -> List[Dict[str, Any]]:
         return list(

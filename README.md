@@ -4,9 +4,8 @@
 
 ## Web server
 
-The server runs on Quart 0.16.3.
-We are using Hypercorn as a ASGI server for production.
-The app runs on port 37888 (by default).
+The server runs on Quart 0.16.3. We are using Hypercorn as an ASGI server for production. The app runs on port 37888 (by
+default).
 
 ---
 
@@ -14,7 +13,7 @@ The app runs on port 37888 (by default).
 
 1. **Google**
 
-- Create a google API account
+- Create a Google API account
 - Create a client secret
 - put client_secret.json in root project folder
 
@@ -63,21 +62,21 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
 
 - `/api/register` [POST]
 
-    The request expects the parameters as a form:
+  The request expects the parameters as a form:
     - `first_name`
     - `last_name`
     - `email` -> valid email syntax
     - `password` -> 6 characters or more
 
-    Upon succesful registration, the server returns a JSON token with 3 hours validity:
+  Upon successful registration, the server returns a JSON token with 3 hours validity:
     ```
     {
         "token" = "long JWT token"
     }
     ```
 
-    Excepts:
-    - 422 - insuffitient information
+  Excepts:
+    - 422 - insufficient information
     - 422 - wrong body format
     - 400 - password check not passed
     - 400 - email check not passed
@@ -85,30 +84,30 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
 
 - `/api/login` [POST]
 
-    The request expects the parameters as a form:
+  The request expects the parameters as a form:
     - `email` -> valid email syntax
     - `password` -> 6 characters or more
 
-    Upon succesful login, the server returns a JSON token with 3 hours validity:
+  Upon successful login, the server returns a JSON token with 3 hours validity:
     ```
     {
         "token" = "long JWT token"
     }
     ```
 
-    Excepts:
+  Excepts:
     - 422 - wrong input format
-    - 422 - insuffitient information
+    - 422 - insufficient information
 
 - `/api/oauth2/google` [POST]
-    Currently not functional
+  Currently not functional
 
 - `/api/get_all_sites` [GET]
 
-    the requests expects the parameter as an argument:
-    - `filter` -> all, visited, unvisied
+  the requests expect the parameter as an argument:
+    - `filter` -> all, visited, unvisited
 
-    if filter is valid, returns:
+  if filter is valid, returns:
     ```
     {
     "sites": [
@@ -124,41 +123,40 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
 
 - `/api/get_site_info` [GET]
 
-    the requests expects the parameter as an argument:
-    - `filter` -> all, visited, unvisied
+  the requests expect the parameter as an argument:
+    - `filter` -> all, visited, unvisited
 
-    if filter is valid, returns:
+  if filter is valid, returns:
     ```
+
 {
-    "city": str,
-    "description": str,
-    "employees": [ # Only if employees are assigned
-        {
-            "added_by": int,
-            "can_reward": bool,
-            "email": str,
-            "first_name": str,
-            "last_name": str,
-            "place_id": int,
-            "profile_picture": str
-        }
-    ],
-    "images": [
-        str,
-    ],
-    "latitude": str,
-    "longitude": str,
-    "name": str,
-    "region": str
-}
-    ```
+"city": str,
+"description": str,
+"employees": [ # Only if employees are assigned {
+"added_by": int,
+"can_reward": bool,
+"email": str,
+"first_name": str,
+"last_name": str,
+"place_id": int,
+"profile_picture": str }
+],
+"images": [
+str,
+],
+"latitude": str,
+"longitude": str,
+"name": str,
+"region": str }
+
+```
 
 - `/api/refresh-token` [POST]
 
-    the request requires header:
-    `Authorization` : valid JWT token
+  the request requires header:
+  `Authorization` : valid JWT token
 
-    if token is valid, returns:
+  if token is valid, returns:
     ```
     {
         'token' : 'long JWT token'
@@ -167,10 +165,10 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
 
 - `/api/get_self_info` [GET]
 
-    the request requires header:
-    `Authorization` : valid JWT token
+  the request requires header:
+  `Authorization` : valid JWT token
 
-    if token is valid, returns:
+  if token is valid, returns:
     ```
     {
     "email": str,
@@ -200,20 +198,21 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
             "visitor_id": int
         }
     ]
+
 }
-    ```
+```
 
 - `/api/get_user_info` [GET]
 
-    Currenltly you get get info about employees only
+  You currently get info about employees only
 
-    the request requires header:
-    `Authorization` : valid JWT token
+  the request requires header:
+  `Authorization` : valid JWT token
 
-    the request requires the param as argument:
-    `id` : user_id
+  the request requires the param as argument:
+  `id` : user_id
 
-    upon valid JWT token and id, returns:
+  upon valid JWT token and id, returns:
     ```
     {
     "added_by": {
@@ -233,20 +232,20 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
     ```
 - `/imageserver/tourist_sites` [GET]
 
-    the request requires header:
-    `Authorization` : valid JWT token
+  the request requires header:
+  `Authorization` : valid JWT token
 
-    the request requires the param as argument:
-    `name` : picture name **with** extention (.jpg, .png)
+  the request requires the param as argument:
+  `name` : picture name **with** extension (.jpg, .png)
 
-    if name and JWT token valid, returns photo
+  if name and JWT token valid, returns photo
 
 - `/imageserver/profile_pictures` [GET]
 
-    the request requires header:
-    `Authorization` : valid JWT token
+  the request requires header:
+  `Authorization` : valid JWT token
 
-    the request requires the param as argument:
-    `name` : picture name **with** extention (.jpg, .png)
+  the request requires the param as argument:
+  `name` : picture name **with** extension (.jpg, .png)
 
-    if name and JWT token valid, returns photo
+  if name and JWT token valid, returns photo

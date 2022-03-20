@@ -2,26 +2,29 @@
 import os
 from os import path
 from re import match
-from typing import List
+from typing import List, Any, Dict, Optional, Tuple
 
 # Dependency imports
 from quart import Quart, request, send_file, g
+from quart_cors import cors
 from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
-from quart_cors import cors
 
 # Own imports
 from .app_logic import get_employee_info, get_site_by_id, get_tourist_sites, get_user_info
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
 from .database import db_init, async_session
+from .database.employees import Employees
 from .database.local_users import LocalUsers
 from .database.model.local_users import LocalUsers as LocalUsersModel
 from .database.model.users import Users as UsersModel
+from .database.stamps import Stamps
 from .database.users import Users
 from .google_api import google_api
-from .utils.enviromental_variables import PORT
+from .stamps import generate_stamp_token, finish_stamping, Stamp
 from .utils.all_sites_filter import AllSitesFilter
+from .utils.enviromental_variables import PORT
 
 UNAUTHENTICATED_URLS: List[str] = [
     '/api/login',
@@ -142,6 +145,43 @@ async def get_site_info():
     return (site, 200) if site is not None else ({"error": "Site not found", }, 404)
 
 
+@application.route('/api/stamp_token', methods=['GET', ], )
+async def stamp_token() -> Tuple[Dict[str, str], int]:
+    async with async_session() as session:
+        result: Optional[Dict[str, Any]] = await Employees.by_id(session, g.authenticated_user)
+
+        if result is None:
+            return {
+                       'error': 'Only allowed for employees!',
+                   }, 400
+
+        return {
+                   'token': generate_stamp_token(
+                       g.authenticated_user,
+                       result['place_id'],
+                   ),
+               }, 200
+
+
+@application.route('/api/receive_stamp/<string:token>', methods=['POST', ], )
+async def receive_stamp(token: str) -> Tuple[Dict[str, str], int]:
+    async with async_session() as session:
+        stamp: Stamp = finish_stamping(token, g.authenticated_user)
+
+        if stamp.visitor_id == stamp.employee_id:
+            return {'error': "You can't give yourself stamps!"}, 400
+
+        if await Stamps.add_stamp(
+                session,
+                stamp.visitor_id,
+                stamp.employee_id,
+                stamp.place_id,
+        ):
+            return {'message': 'Stamp received!'}, 200
+
+        return {'error': 'You already have this stamp!'}, 400
+
+
 # Login and registration endpoints
 
 
@@ -160,7 +200,7 @@ async def registration():
         'token' : 'long JWT token'
 
     excepts:
-        422 - insuffitient information
+        422 - insufficient information
         422 - wrong body format
         400 - password check not passed
         400 - email check not passed
@@ -175,14 +215,14 @@ async def registration():
 
     if None in (first_name, last_name, email, password,):
         return {
-            'error': 'insufficient information',
-            'expected': [
-                'first_name',
-                'last_name',
-                'email',
-                'password',
-            ],
-        }, 422
+                   'error': 'insufficient information',
+                   'expected': [
+                       'first_name',
+                       'last_name',
+                       'email',
+                       'password',
+                   ],
+               }, 422
 
     if len(password, ) < 6:
         return {'error': 'Password too short. It must be 6 characters or longer', }, 400
@@ -237,7 +277,7 @@ async def login():
 
     excepts:
         422 - wrong input format
-        422 - insuffitient information
+        422 - insufficient information
     """
     form = await request.form
 
@@ -341,7 +381,7 @@ async def tourist_site_photo():
     Requires Authorization header
 
     params:
-        name -> name of the picture, including the extention (.png, .jpg)
+        name -> name of the picture, including the extension (.png, .jpg)
 
     returns:
         picture, as a file
@@ -375,11 +415,11 @@ async def tourist_site_photo():
 @application.route('/imageserver/profile_pictures', methods=['GET', ], )
 async def profile_pictures():
     """
-    Get a profile picture based on name. Currently doesn't check if
-    user has access to that profile pic
+    Get a profile picture based on name.
+    It currently doesn't check if user has access to that profile picture.
 
     params:
-        name -> name of the picture, including the extention (.png, .jpg)
+        name -> name of the picture, including the extension (.png, .jpg)
 
     returns:
         picture, as a file
@@ -419,5 +459,5 @@ def manual_run():
 
 
 # Put anything that you want to start from Gunicorn master process here
-def on_starting(server):
+def on_starting(_server):
     pass

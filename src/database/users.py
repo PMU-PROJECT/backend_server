@@ -11,18 +11,18 @@ class Users(object):
     @staticmethod
     async def exists_by_email(session: AsyncSession, email: str) -> bool:
         return (
-            await session.execute(
-                select(
-                    literal(True),
-                ).where(
-                    select(
-                        UsersModel.email,
-                    ).where(
-                        UsersModel.email == email,
-                    ).exists(),
-                )
-            )
-        ).scalar() is True
+                   await session.execute(
+                       select(
+                           literal(True),
+                       ).where(
+                           select(
+                               UsersModel.email,
+                           ).where(
+                               UsersModel.email == email,
+                           ).exists(),
+                       )
+                   )
+               ).scalar() is True
 
     @staticmethod
     async def by_id(session: AsyncSession, user_id: int) -> Union[None, Dict[str, Any]]:
