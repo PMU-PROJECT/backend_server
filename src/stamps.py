@@ -13,13 +13,6 @@ del __secret_key
 del __public_key
 
 
-def generate_stamp_token(employee_id: int, place_id: int) -> str:
-    return __enc_box.encrypt(
-        f"{employee_id}\n{place_id}\n{(datetime.utcnow() + timedelta(seconds=30)).isoformat()}"
-        f"".encode('utf-8')
-    ).hex()
-
-
 class Stamp:
     visitor_id: int
     place_id: int
@@ -33,17 +26,29 @@ class Stamp:
         self.employee_id: int = employee_id
 
 
-class InvalidToken(Exception):
+class InvalidStampToken(Exception):
     pass
 
 
-def finish_stamping(token: str, visitor_id: int) -> Stamp:
+def generate_stamp_token(employee_id: int, place_id: int) -> str:
+    return __enc_box.encrypt(
+        f"{employee_id}\n{place_id}\n{(datetime.utcnow() + timedelta(seconds=30)).isoformat()}"
+        f"".encode('utf-8')
+    ).hex()
+
+
+def make_stamp(token: str, visitor_id: int) -> Stamp:
     try:
+        # Decrypt the data from the token
         token: List[str] = __dec_box.decrypt(bytes.fromhex(token)) \
             .decode('utf-8').split('\n')
 
+        # Check if we have the 3 fields
         if len(token) == 3:
+            # if token hasn't expired, make a stamp
             if datetime.utcnow() < datetime.fromisoformat(token[2]):
+
+                # TODO rewrite
                 return Stamp(*map(int, token[:2]), visitor_id)
     except (ValueError, TypeError, CryptoError):
-        raise InvalidToken()
+        raise InvalidStampToken()

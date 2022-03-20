@@ -11,7 +11,7 @@ from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
 
 # Own imports
-from .app_logic import get_employee_info, get_site_by_id, get_tourist_sites, get_user_info
+from .response_formaters import get_employee_info, get_site_by_id, get_tourist_sites, get_user_info
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
 from .database import db_init, async_session
@@ -22,7 +22,7 @@ from .database.model.users import Users as UsersModel
 from .database.stamps import Stamps
 from .database.users import Users
 from .google_api import google_api
-from .stamps import generate_stamp_token, finish_stamping, Stamp
+from .stamps import InvalidStampToken, generate_stamp_token, make_stamp, Stamp
 from .utils.all_sites_filter import AllSitesFilter
 from .utils.enviromental_variables import PORT
 
@@ -144,39 +144,51 @@ async def get_site_info():
 
     return (site, 200) if site is not None else ({"error": "Site not found", }, 404)
 
+# Stamping endpoints
 
-@application.route('/api/stamp_token', methods=['GET', ], )
+
+@application.route('/api/get_stamp_token', methods=['GET', ], )
 async def stamp_token() -> Tuple[Dict[str, str], int]:
     async with async_session() as session:
-        result: Optional[Dict[str, Any]] = await Employees.by_id(session, g.authenticated_user)
 
-        if result is None:
+        # Get employee info
+        employee: Optional[Dict[str, Any]] = await Employees.by_id(session, g.authenticated_user)
+
+        if employee is None:
             return {
                 'error': 'Only allowed for employees!',
+            }, 401
+
+        if employee.get('place_id') is None:
+            return {
+                'error': 'You dont have an assigned place! Please contact an admin',
             }, 400
 
         return {
             'token': generate_stamp_token(
                 g.authenticated_user,
-                result['place_id'],
+                employee['place_id'],
             ),
         }, 200
 
 
-@application.route('/api/receive_stamp/<string:token>', methods=['POST', ], )
-async def receive_stamp(token: str) -> Tuple[Dict[str, str], int]:
+@application.route('/api/receive_stamp', methods=['POST', ], )
+async def receive_stamp() -> Tuple[Dict[str, str], int]:
     async with async_session() as session:
-        stamp: Stamp = finish_stamping(token, g.authenticated_user)
+
+        # Make a stamp object
+        stamp_token: str = (await request.form).get('stamp_token')
+
+        try:
+            stamp: Stamp = make_stamp(stamp_token, g.authenticated_user)
+        except InvalidStampToken:
+            return {'error': "The stamp token has expired!"}, 400
 
         if stamp.visitor_id == stamp.employee_id:
             return {'error': "You can't give yourself stamps!"}, 400
 
-        if await Stamps.add_stamp(
-                session,
-                stamp.visitor_id,
-                stamp.employee_id,
-                stamp.place_id,
-        ):
+        # If adding stamp to DB is succesful
+        if await Stamps.add_stamp(session, stamp):
             return {'message': 'Stamp received!'}, 200
 
         return {'error': 'You already have this stamp!'}, 400
@@ -208,12 +220,16 @@ async def registration():
     """
     form = await request.form
 
+    if form is None:
+        return {"error": "Wrong request body!"}
+
     first_name = form.get('first_name', type=str, )
     last_name = form.get('last_name', type=str, )
     email = form.get('email', type=str, )
     password = form.get('password', type=str, )
 
-    if None in (first_name, last_name, email, password,):
+    # If we don't have all the needed info, return
+    if None in (first_name, last_name, email, password):
         return {
             'error': 'insufficient information',
             'expected': [
@@ -224,13 +240,18 @@ async def registration():
             ],
         }, 422
 
-    if len(password, ) < 6:
+    # Password check
+    # TODO make more sophisticated
+    if len(password) < 6:
         return {'error': 'Password too short. It must be 6 characters or longer', }, 400
 
     async with async_session() as session:
-        if await Users.exists_by_email(session, email, ):
+        if await Users.exists_by_email(session, email):
             return {'error': 'User with this email already exists!', }, 400
 
+        # TODO Open a transaction
+        # TODO move to users helper
+        # Only email has strict syntax. If syntax not valid, return
         try:
             user_id: int = (
                 await session.execute(
@@ -248,6 +269,7 @@ async def registration():
         except IntegrityError:
             return {"error": "Email not valid", }, 400
 
+        # Store the password hash
         await session.execute(
             insert(
                 LocalUsersModel,
@@ -302,8 +324,8 @@ async def login():
 
 @application.route('/api/oauth2/google', methods=['GET', ], )
 async def google_oauth2():
-    print(google_api.authorization_url(), )
-    print(request.args, )
+    logger.debug(google_api.authorization_url(), )
+    logger.debug(request.args, )
 
     raise AuthenticationError()
 
@@ -335,14 +357,14 @@ async def self_info():
         {long json info}
 
     excepts:
-        401 - not authorized
+        401 : not authorized
     """
     user_id = g.authenticated_user
 
     async with async_session() as session:
         user = await get_user_info(session, user_id, )
 
-    return user
+    return user, 200
 
 
 @application.route('/api/get_user_info', methods=['GET', ], )
@@ -395,9 +417,11 @@ async def tourist_site_photo():
     name = request.args.get('name', type=str, )
 
     if name is not None:
+        # Ensure user is not accessing other parts of the OS
         if match(r'^[\w\s_+\-()]([\w\s_+\-().])+$', name) is None:
             return {"error": "Invalid site picture!", }, 400
 
+        # Make the path of the picture
         file_path = os.path.join(
             'public',
             'tourist_sites',
