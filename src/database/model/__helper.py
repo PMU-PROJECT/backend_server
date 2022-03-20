@@ -7,7 +7,6 @@ from sqlalchemy.types import BigInteger
 
 @as_declarative()
 class ORMBase(object):
-    @classmethod
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
