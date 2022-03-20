@@ -152,15 +152,15 @@ async def stamp_token() -> Tuple[Dict[str, str], int]:
 
         if result is None:
             return {
-                       'error': 'Only allowed for employees!',
-                   }, 400
+                'error': 'Only allowed for employees!',
+            }, 400
 
         return {
-                   'token': generate_stamp_token(
-                       g.authenticated_user,
-                       result['place_id'],
-                   ),
-               }, 200
+            'token': generate_stamp_token(
+                g.authenticated_user,
+                result['place_id'],
+            ),
+        }, 200
 
 
 @application.route('/api/receive_stamp/<string:token>', methods=['POST', ], )
@@ -215,14 +215,14 @@ async def registration():
 
     if None in (first_name, last_name, email, password,):
         return {
-                   'error': 'insufficient information',
-                   'expected': [
-                       'first_name',
-                       'last_name',
-                       'email',
-                       'password',
-                   ],
-               }, 422
+            'error': 'insufficient information',
+            'expected': [
+                'first_name',
+                'last_name',
+                'email',
+                'password',
+            ],
+        }, 422
 
     if len(password, ) < 6:
         return {'error': 'Password too short. It must be 6 characters or longer', }, 400
@@ -315,11 +315,11 @@ async def refresh_token():
 
     returns:
     {
-        'token' : 'JWT token'
+        'token' : str
     }
 
     excepts:
-        401 : JWT token not valid
+        401 : token not valid
     """
     return {'token': generate_token(g.authenticated_user, ), }, 200
 
