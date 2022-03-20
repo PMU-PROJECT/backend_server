@@ -120,15 +120,12 @@ async def get_user_info(session: AsyncSession, user_id: int):
     user['employee_info'] = await Employees.by_id(session, user_id)
     user['is_admin'] = bool(await Administrators.exists(session, user_id))
 
-    if user.get('employee_info') is not None:
-        user['employee_info']['added_by'] = await Users.by_id(session, int(user['employee_info'].get('added_by')))
-
     return user
 
 
 async def get_employee_info(session: AsyncSession, employee_id: int):
     """
-    Function for getting employee info
+    Function for getting JSON-able employee info
     """
 
     employee_info = await Employees.by_id(session, employee_id)
@@ -139,6 +136,5 @@ async def get_employee_info(session: AsyncSession, employee_id: int):
 
     # Needed requests
     employee_info['is_admin'] = await Administrators.exists(session, employee_id)
-    employee_info['added_by'] = await Users.by_id(session, employee_info.get('added_by'))
 
     return employee_info
