@@ -149,6 +149,19 @@ async def get_site_info():
 
 @application.route('/api/get_stamp_token', methods=['GET', ], )
 async def stamp_token() -> Tuple[Dict[str, str], int]:
+    """
+    Parameter for getting a token to be scanned (via QR)
+    Requires user to be an employee. Token has a 30sec validity.
+
+    returns:
+        {"token" : str}
+
+    excepts:
+        401: Not logged in
+        401: not employee
+        400: Employee without assigned place
+
+    """
     async with async_session() as session:
 
         # Get employee info
@@ -174,6 +187,21 @@ async def stamp_token() -> Tuple[Dict[str, str], int]:
 
 @application.route('/api/receive_stamp', methods=['POST', ], )
 async def receive_stamp() -> Tuple[Dict[str, str], int]:
+    """
+    Endpoint for receiving a stamp from a scanned token.
+
+    args:
+        'stamp_token' : str -> scanned token
+
+    returns:
+        {"message" : str} on success
+
+    excepts:
+        401: not authorized
+        400: expired/invalid token
+        400: employee trying to give himself a stamp
+        400: already have this stamp
+    """
     async with async_session() as session:
 
         # Make a stamp object
@@ -182,7 +210,7 @@ async def receive_stamp() -> Tuple[Dict[str, str], int]:
         try:
             stamp: Stamp = make_stamp(stamp_token, g.authenticated_user)
         except InvalidStampToken:
-            return {'error': "The stamp token has expired!"}, 400
+            return {'error': "The stamp token has expired or isn't valid!"}, 400
 
         if stamp.visitor_id == stamp.employee_id:
             return {'error': "You can't give yourself stamps!"}, 400
