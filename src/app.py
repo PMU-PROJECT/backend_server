@@ -154,7 +154,7 @@ async def stamp_token() -> Tuple[Dict[str, str], int]:
     Requires user to be an employee. Token has a 30sec validity.
 
     returns:
-        {"token" : str}
+        {"stamp_token" : str}
 
     excepts:
         401: Not logged in

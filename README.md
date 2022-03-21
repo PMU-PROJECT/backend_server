@@ -286,7 +286,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   - 401: Not employee
   - 400: Employee without assigned place
 
-- `/api/recieve_stamp` [POST]
+- `/api/receive_stamp` [POST]
   
   For USERS to recieve a stamp, that IS scanned from an employee
 
