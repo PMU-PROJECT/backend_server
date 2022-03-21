@@ -11,7 +11,7 @@ from sqlalchemy import insert
 from sqlalchemy.exc import IntegrityError
 
 # Own imports
-from .response_formaters import get_employee_info, get_site_by_id, get_tourist_sites, get_user_info
+from .response_formaters import get_employee_info, get_site_by_id, get_tourist_sites, get_self_info, get_user_info
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
 from .database import db_init, async_session
@@ -390,13 +390,13 @@ async def self_info():
     user_id = g.authenticated_user
 
     async with async_session() as session:
-        user = await get_user_info(session, user_id, )
+        user = await get_self_info(session, user_id, )
 
     return user, 200
 
 
-@application.route('/api/get_user_info', methods=['GET', ], )
-async def user_info():
+@application.route('/api/get_employee_info', methods=['GET', ], )
+async def employee_info():
     """
     Get info about an employee, based on ID
 
@@ -420,6 +420,31 @@ async def user_info():
         employee = await get_employee_info(session, user_id, )
         return ({"error": "Employee doesn't exist!", }, 404) if employee is None else (employee, 200)
 
+
+@application.route('/api/get_user_info', methods=['GET'], )
+async def user_info():
+    """
+    Get info about an user, based on ID
+
+    params:
+        id argument -> user_id
+
+    returns:
+        {info about user}
+
+    excepts:
+        401 - not authorized
+        422 - id argument missing
+        404 - user doesn't exist
+    """
+    user_id = request.args.get('id', type=int, )
+
+    if user_id is None:
+        return {"error": "Insufficient information", }, 422
+
+    async with async_session() as session:
+        user = await get_user_info(session, user_id, )
+        return ({"error": "User doesn't exist!", }, 404) if user is None else (user, 200)
 
 # ###### IMAGE SERVER HANDLERS ######
 

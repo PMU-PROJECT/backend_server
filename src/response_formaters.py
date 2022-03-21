@@ -104,7 +104,7 @@ async def get_site_by_id(session: AsyncSession, site_id: int):
     }
 
 
-async def get_user_info(session: AsyncSession, user_id: int):
+async def get_self_info(session: AsyncSession, user_id: int):
     """
     Function for generating JSON-able user info
     """
@@ -118,6 +118,31 @@ async def get_user_info(session: AsyncSession, user_id: int):
     # Needed requests
     user['stamps'] = await Stamps.all(session, user_id)
     user['employee_info'] = await Employees.by_id(session, user_id)
+    user['is_admin'] = bool(await Administrators.exists(session, user_id))
+
+    return user
+
+
+async def get_user_info(session: AsyncSession, user_id: int):
+    """
+    Function for generating JSON-able user info
+    """
+
+    user_db = dict(await Users.by_id(session, user_id))
+
+    # if None, no point in continuing
+    if user_db is None:
+        return None
+
+    user = {}
+
+    # Get only needed info from db request
+    user['first_name'] = user_db.get('first_name')
+    user['last_name'] = user_db.get('last_name')
+    user['profile_picture'] = user_db.get('profile_picture')
+
+    # Needed requests
+    user['is_employee'] = bool(await Employees.exists(session, user_id))
     user['is_admin'] = bool(await Administrators.exists(session, user_id))
 
     return user

@@ -186,12 +186,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
     {
     "email": str,
     "employee_info": {
-        "added_by": {
-            "email": str,
-            "first_name": str,
-            "last_name": str,
-            "profile_picture": str
-        },
+        "added_by": int,
         "can_reward": bool,
         "email": str,
         "first_name": str,
@@ -218,7 +213,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
     401 : not authorized
 
 
-- `/api/get_user_info` [GET]
+- `/api/get_employee_info` [GET]
 
   You currently get info about employees only
 
@@ -231,12 +226,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   upon valid Auth token and id, returns:
   ```
   {
-  "added_by": {
-    "email": str,
-    "first_name": str,
-    "last_name": str,
-    "profile_picture": str
-  },
+  "added_by": int,
   "can_reward": bool,
   "email": str,
   "first_name": str,
@@ -251,6 +241,29 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
     401 - not authorized
     422 - id argument missing
     404 - Employee doesn't exist // user isn't employee
+
+- `/api/get_user_info` [GET]
+
+  Get general information about a certain user
+
+  the request expects args:
+    `id` - user_id
+  
+  if user exists, returns:
+  ```
+  {
+    "first_name": str,
+    "is_admin": bool,
+    "is_employee": bool,
+    "last_name": str,
+    "profile_picture": str
+  }
+  ```
+  
+  Excepts:
+    401 - not authorized
+    422 - id argument missing
+    404 - User doesn't exist
 
 - `/api/get_stamp_token` [GET]
 
