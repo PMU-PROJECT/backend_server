@@ -43,12 +43,10 @@ def make_stamp(token: str, visitor_id: int) -> Stamp:
         token: List[str] = __dec_box.decrypt(bytes.fromhex(token)) \
             .decode('utf-8').split('\n')
 
-        # Check if we have the 3 fields
-        if len(token) == 3:
-            # if token hasn't expired, make a stamp
-            if datetime.utcnow() < datetime.fromisoformat(token[2]):
-
-                # TODO rewrite
-                return Stamp(*map(int, token[:2]), visitor_id)
+        # Check if we have the 3 fields, if token hasn't expired, make a stamp
+        if len(token) == 3 and datetime.utcnow() < datetime.fromisoformat(token[2]):
+            return Stamp(*map(int, token[:2]), visitor_id)
+        else:
+            raise InvalidStampToken()
     except (ValueError, TypeError, CryptoError):
         raise InvalidStampToken()
