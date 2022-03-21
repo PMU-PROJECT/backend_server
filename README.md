@@ -122,8 +122,8 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
     ```
 
     Excepts:
-      401: Auth token not valid
-      400: filter not valid
+    - 401: Auth token not valid
+    - 400: filter not valid
 
 - `/api/get_site_info` [GET]
 
@@ -158,8 +158,8 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   ```
 
   Excepts:
-    401 - Auth token not valid
-    404 - site id doesn't exist
+  - 401 - Auth token not valid
+  - 404 - site id doesn't exist
 
 - `/api/refresh_token` [POST]
 
@@ -174,7 +174,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   ```
 
   Excepts:
-    401 : token not valid
+  - 401 : token not valid
 
 - `/api/get_self_info` [GET]
 
@@ -210,7 +210,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   ```
 
   Excepts:
-    401 : not authorized
+  - 401 : not authorized
 
 
 - `/api/get_employee_info` [GET]
@@ -238,9 +238,9 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   ```
 
   Excepts:
-    401 - not authorized
-    422 - id argument missing
-    404 - Employee doesn't exist // user isn't employee
+  - 401 - not authorized
+  - 422 - id argument missing
+  - 404 - Employee doesn't exist // user isn't employee
 
 - `/api/get_user_info` [GET]
 
@@ -261,9 +261,9 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   ```
   
   Excepts:
-    401 - not authorized
-    422 - id argument missing
-    404 - User doesn't exist
+  - 401 - not authorized
+  - 422 - id argument missing
+  - 404 - User doesn't exist
 
 - `/api/get_stamp_token` [GET]
 
@@ -282,9 +282,9 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   ```
 
   excepts:
-    401: Not logged in
-    401: Not employee
-    400: Employee without assigned place
+  - 401: Not logged in
+  - 401: Not employee
+  - 400: Employee without assigned place
 
 - `/api/recieve_stamp` [POST]
   
@@ -304,10 +304,10 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   ```
 
   Excepts:
-    401: not authorized
-    400: expired/invalid token
-    400: employee trying to give himself a stamp
-    400: already have this stamp
+  - 401: not authorized
+  - 400: expired/invalid token
+  - 400: employee trying to give himself a stamp
+  - 400: already have this stamp
 
 
 - `/imageserver/tourist_sites` [GET]
@@ -321,10 +321,10 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   if name and Auth token valid, returns photo
 
   Excepts:
-    401 - invalid token
-    404 - picture not found
-    400 - file name not valid
-    422 - name argument missing
+  - 401 - invalid token
+  - 404 - picture not found
+  - 400 - file name not valid
+  - 422 - name argument missing
 
 - `/imageserver/profile_pictures` [GET]
 
@@ -337,7 +337,8 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   if name and Auth token valid, returns photo
 
   Excepts:
-    401 - invalid token
-    404 - picture not found
-    400 - file name not valid
-    422 - name argument missing
+  - 401 - invalid token
+  - 404 - picture not found
+  - 400 - file name not valid
+  - 422 - name argument missing
+  
