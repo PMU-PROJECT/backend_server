@@ -53,7 +53,7 @@ application.register_error_handler(
 @application.before_request
 def auth_before_request():
     """
-    Validates JWT token in Authorization header. Executes before every
+    Validates Auth token in Authorization header. Executes before every
     protected endpoint
     """
     if request.path not in UNAUTHENTICATED_URLS:
@@ -91,7 +91,7 @@ async def get_all_sites():
     ]
 
     excepts:
-        401: JWT token not valid
+        401: Auth token not valid
         400: filter not valid
     """
 
@@ -132,7 +132,7 @@ async def get_site_info():
         }
 
     excepts:
-        401 - JWT token not valid
+        401 - Auth token not valid
         404 - site id doesn't exist
     """
     site_id = request.args.get('id', type=int, )
@@ -178,7 +178,7 @@ async def stamp_token() -> Tuple[Dict[str, str], int]:
             }, 400
 
         return {
-            'token': generate_stamp_token(
+            'stamp_token': generate_stamp_token(
                 g.authenticated_user,
                 employee['place_id'],
             ),
@@ -237,7 +237,7 @@ async def registration():
     'password -> 6 or more characters
 
     returns:
-        'token' : 'long JWT token'
+        'token' : 'long Auth token'
 
     excepts:
         422 - insufficient information
@@ -322,7 +322,7 @@ async def login():
 
     returns:
     {
-        'token' : 'long JWT token'
+        'token' : 'long Auth token'
     }
 
     excepts:
@@ -358,7 +358,7 @@ async def google_oauth2():
     raise AuthenticationError()
 
 
-@application.route('/api/refresh-token', methods=['GET', ], )
+@application.route('/api/refresh_token', methods=['GET', ], )
 async def refresh_token():
     """
     Generate new token based on old VALID token
