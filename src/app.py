@@ -104,7 +104,7 @@ async def get_all_sites():
         return {"error": "Incorrect information",
                 "expected": "'filter' : 'all' / 'visited' / 'unvisited' as an argument"}, 400
 
-    logger.debug("User requested all site info", )
+    logger.debug(f"User {g.authenticated_user} requested all site info")
 
     async with async_session() as session:
         sites = await get_tourist_sites(session, site_type, g.authenticated_user)
@@ -137,7 +137,8 @@ async def get_site_info():
     """
     site_id = request.args.get('id', type=int, )
 
-    logger.debug("User requested site detailed info", )
+    logger.debug(
+        f"User {g.authenticated_user} requested site {site_id} detailed info")
 
     async with async_session() as session:
         site = await get_site_by_id(session, site_id)
@@ -164,15 +165,22 @@ async def stamp_token() -> Tuple[Dict[str, str], int]:
     """
     async with async_session() as session:
 
+        logger.debug(
+            f"user with id {g.authenticated_user} requested a stamp token")
+
         # Get employee info
         employee: Optional[Dict[str, Any]] = await Employees.by_id(session, g.authenticated_user)
 
         if employee is None:
+            logger.warning(
+                f"Non employee (id:{g.authenticated_user}) requested stamp token!")
             return {
                 'error': 'Only allowed for employees!',
             }, 401
 
         if employee.get('place_id') is None:
+            logger.warning(
+                f"Employee with id {g.authenticated_user} doesn't have an allocated place!")
             return {
                 'error': 'You dont have an assigned place! Please contact an admin',
             }, 400
@@ -206,22 +214,27 @@ async def receive_stamp() -> Tuple[Dict[str, str], int]:
 
         # Make a stamp object
         stamp_token: str = (await request.form).get('stamp_token')
+        logger.debug(f"User (id:{g.authenticated_user}) requested a stamp")
         logger.debug(f"stamp_token type : {type(stamp_token)}")
 
         try:
             stamp: Stamp = make_stamp(stamp_token, g.authenticated_user)
-            logger.debug("Stamp made : {stamp}")
+            logger.debug("Stamp successfully made!")
         except InvalidStampToken:
             return {'error': "The stamp token has expired or isn't valid!"}, 400
 
         if stamp.visitor_id == stamp.employee_id:
+            logger.warning(
+                f'Employee (id:{g.authenticated_user}) tried to give themselves a stamp')
             return {'error': "You can't give yourself stamps!"}, 400
 
         # If adding stamp to DB is succesful
         if await Stamps.add_stamp(session, stamp):
+            logger.debug("Stamp saved to Database")
             return {'message': 'Stamp received!'}, 200
 
-        return {'error': 'You already have this stamp!'}, 400
+        logger.debug("Stamp already exists")
+        return {'error': 'You already have this stamp!'}, 418
 
 
 # Login and registration endpoints
@@ -248,9 +261,11 @@ async def registration():
         400 - email check not passed
         400 - user with that email already exists
     """
+    logger.debug("New user registration")
     form = await request.form
 
     if form is None:
+        logger.debug("User provided wrong request format")
         return {"error": "Wrong request body!"}
 
     first_name = form.get('first_name', type=str, )
@@ -260,6 +275,7 @@ async def registration():
 
     # If we don't have all the needed info, return
     if None in (first_name, last_name, email, password):
+        logger.debug("User didn't fill all needed information")
         return {
             'error': 'insufficient information',
             'expected': [
@@ -273,10 +289,12 @@ async def registration():
     # Password check
     # TODO make more sophisticated
     if len(password) < 6:
+        logger.debug("Password check failed")
         return {'error': 'Password too short. It must be 6 characters or longer', }, 400
 
     async with async_session() as session:
         if await Users.exists_by_email(session, email):
+            logger.debug("Email already exists")
             return {'error': 'User with this email already exists!', }, 400
 
         # TODO Open a transaction
@@ -311,6 +329,8 @@ async def registration():
 
         await session.commit()
 
+        logger.debug("Registration success!")
+
         return {'token': generate_token(user_id, ), }, 200
 
 
@@ -331,29 +351,35 @@ async def login():
         422 - wrong input format
         422 - insufficient information
     """
+    logger.debug("User login request")
     form = await request.form
 
     if form is None:
-        return {"error": "Wrong request body!"}
+        logger.debug("User provided wrong request format")
+        return {"error": "Wrong request body!"}, 400
 
     email = form.get('email', type=str, )
     password = form.get('password', type=str, )
 
     if None in (email, password,):
+        logger.debug("User didn't provide enough info")
         return {"error": "Insufficient information", }, 422
 
     async with async_session() as session:
         user_id, pw_hash = await LocalUsers.by_email(session, email, )
 
         if verify_password(password, pw_hash, ):
+            logger.debug(f"Succesful login for (id: {user_id})")
             return {'token': generate_token(user_id, ), }, 200
 
+        logger.debug("Unsuccesful login")
         # returns 400 error
         raise AuthenticationError()
 
 
 @application.route('/api/oauth2/google', methods=['GET', ], )
 async def google_oauth2():
+    logger.warning("OAuth called!")
     logger.debug(google_api.authorization_url(), )
     logger.debug(request.args, )
 
@@ -366,13 +392,12 @@ async def refresh_token():
     Generate new token based on old VALID token
 
     returns:
-    {
         'token' : str
-    }
 
     excepts:
         401 : token not valid
     """
+    logger.debug(f"user {g.authenticated_user} requested token refresh")
     return {'token': generate_token(g.authenticated_user, ), }, 200
 
 
@@ -390,7 +415,7 @@ async def self_info():
         401 : not authorized
     """
     user_id = g.authenticated_user
-
+    logger.debug(f'User {user_id} requested self info')
     async with async_session() as session:
         user = await get_self_info(session, user_id, )
 
@@ -414,13 +439,19 @@ async def employee_info():
         404 - Employee doesn't exist // user isn't employee
     """
     user_id = request.args.get('id', type=int, )
+    logger.debug(f"user {g.authenticated_user} requested info about {user_id}")
 
     if user_id is None:
         return {"error": "Insufficient information", }, 422
 
     async with async_session() as session:
         employee = await get_employee_info(session, user_id, )
-        return ({"error": "Employee doesn't exist!", }, 404) if employee is None else (employee, 200)
+        if employee is None:
+            logger.warning(
+                f"user with id:{g.authenticated_user} requested info about a non-employee!")
+            return ({"error": "Employee doesn't exist!", }, 404)
+        else:
+            return (employee, 200)
 
 
 @application.route('/api/get_user_info', methods=['GET'], )
@@ -440,6 +471,9 @@ async def user_info():
         404 - user doesn't exist
     """
     user_id = request.args.get('id', type=int, )
+
+    logger.debug(
+        f"User with id:{g.authenticated_user} requested user info about id:{user_id}")
 
     if user_id is None:
         return {"error": "Insufficient information", }, 422
@@ -470,6 +504,8 @@ async def tourist_site_photo():
         422 - name argument missing
     """
     name = request.args.get('name', type=str, )
+
+    logger.debug(f"user requested site picture : {name}")
 
     if name is not None:
         # Ensure user is not accessing other parts of the OS
@@ -511,10 +547,12 @@ async def profile_pictures():
     """
     name = request.args.get('name', type=str, )
 
+    logger.debug(f"user requested profile picture : {name}")
+
     if name is not None:
         # regex testing if user is trying to access other parts of the OS (with..)
         if match(r'^[\w\s_+\-()]([\w\s_+\-().])+$', name) is None:
-            return {"error": "Invalid site picture!", }, 400
+            return {"error": "Invalid profile picture!", }, 400
 
         # TODO check if user has access to that photo
 
