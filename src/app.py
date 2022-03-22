@@ -206,9 +206,11 @@ async def receive_stamp() -> Tuple[Dict[str, str], int]:
 
         # Make a stamp object
         stamp_token: str = (await request.form).get('stamp_token')
+        logger.debug(f"stamp_token type : {type(stamp_token)}")
 
         try:
             stamp: Stamp = make_stamp(stamp_token, g.authenticated_user)
+            logger.debug("Stamp made : {stamp}")
         except InvalidStampToken:
             return {'error': "The stamp token has expired or isn't valid!"}, 400
 
