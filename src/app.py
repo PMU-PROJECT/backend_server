@@ -413,7 +413,7 @@ async def self_info():
         {long json info}
 
     excepts:
-        401 : not authorized
+        401 - not authorized
     """
     user_id = g.authenticated_user
     logger.debug(f'User {user_id} requested self info')
