@@ -83,6 +83,7 @@ async def get_all_sites():
     returns:
     'sites' : [
         {
+            'id' : int,
             'city':str,
             'image':str,
             'name':str,

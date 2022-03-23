@@ -112,6 +112,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
     {
     "sites": [
         {
+            "id": int,
             "city": str,
             "image": str,
             "name": str,

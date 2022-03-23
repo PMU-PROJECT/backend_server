@@ -45,8 +45,9 @@ async def get_tourist_sites(session: AsyncSession, site_type: AllSitesFilter, vi
             if site.get('id') in stamp_places_id:
                 continue
 
-        # image will fail if there are no images to the place
+        # FIXME image will fail if there are no images to the place
         current_site = {
+            'id': site['id'],
             'image': (
                 await Images.all_by_place(
                     session, site.get('id'),
