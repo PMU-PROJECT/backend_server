@@ -10,6 +10,7 @@ from .model.stamps import Stamps as StampsModel
 class Stamps(object):
     @staticmethod
     async def add_stamp(session: AsyncSession, visitor_id: int, employee_id: int, place_id: int) -> bool:
+        # FIXME method not save, as it doesn't check for validity of stamp
         try:
             await session.execute(
                 insert(
@@ -37,6 +38,8 @@ class Stamps(object):
                     employee_id=stamp.employee_id,
                 ),
             )
+
+            await session.commit()
         except IntegrityError:
             return False
 
