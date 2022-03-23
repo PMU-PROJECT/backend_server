@@ -235,7 +235,7 @@ async def receive_stamp() -> Tuple[Dict[str, str], int]:
             return {'message': 'Stamp received!'}, 200
 
         logger.debug("Stamp already exists")
-        return {'error': 'You already have this stamp!'}, 418
+        return {'message': 'You already have this stamp!'}, 200
 
 
 # Login and registration endpoints
