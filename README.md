@@ -146,7 +146,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
         "last_name": str,
         "place_id": int,
         "profile_picture": str 
-        },
+        }, ...
       ],
     "images": [
       str,
