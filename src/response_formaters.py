@@ -45,7 +45,9 @@ async def get_tourist_sites(session: AsyncSession, site_type: AllSitesFilter, vi
             if site.get('id') in stamp_places_id:
                 continue
 
+        # FIXME image will fail if there are no images to the place
         current_site = {
+            'id': site['id'],
             'image': (
                 await Images.all_by_place(
                     session, site.get('id'),
@@ -104,7 +106,7 @@ async def get_site_by_id(session: AsyncSession, site_id: int):
     }
 
 
-async def get_user_info(session: AsyncSession, user_id: int):
+async def get_self_info(session: AsyncSession, user_id: int):
     """
     Function for generating JSON-able user info
     """
@@ -120,15 +122,37 @@ async def get_user_info(session: AsyncSession, user_id: int):
     user['employee_info'] = await Employees.by_id(session, user_id)
     user['is_admin'] = bool(await Administrators.exists(session, user_id))
 
-    if user.get('employee_info') is not None:
-        user['employee_info']['added_by'] = await Users.by_id(session, int(user['employee_info'].get('added_by')))
+    return user
+
+
+async def get_user_info(session: AsyncSession, user_id: int):
+    """
+    Function for generating JSON-able user info
+    """
+
+    user_db = dict(await Users.by_id(session, user_id))
+
+    # if None, no point in continuing
+    if user_db is None:
+        return None
+
+    user = {}
+
+    # Get only needed info from db request
+    user['first_name'] = user_db.get('first_name')
+    user['last_name'] = user_db.get('last_name')
+    user['profile_picture'] = user_db.get('profile_picture')
+
+    # Needed requests
+    user['is_employee'] = bool(await Employees.exists(session, user_id))
+    user['is_admin'] = bool(await Administrators.exists(session, user_id))
 
     return user
 
 
 async def get_employee_info(session: AsyncSession, employee_id: int):
     """
-    Function for getting employee info
+    Function for getting JSON-able employee info
     """
 
     employee_info = await Employees.by_id(session, employee_id)
@@ -139,6 +163,5 @@ async def get_employee_info(session: AsyncSession, employee_id: int):
 
     # Needed requests
     employee_info['is_admin'] = await Administrators.exists(session, employee_id)
-    employee_info['added_by'] = await Users.by_id(session, employee_info.get('added_by'))
 
     return employee_info

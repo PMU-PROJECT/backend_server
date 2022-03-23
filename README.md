@@ -71,7 +71,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   Upon successful registration, the server returns a JSON token with 3 hours validity:
     ```
     {
-        "token" = "long JWT token"
+        "token" = "long Auth token"
     }
     ```
 
@@ -91,7 +91,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   Upon successful login, the server returns a JSON token with 3 hours validity:
     ```
     {
-        "token" = "long JWT token"
+        "token" = "long Auth token"
     }
     ```
 
@@ -112,6 +112,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
     {
     "sites": [
         {
+            "id": int,
             "city": str,
             "image": str,
             "name": str,
@@ -121,64 +122,72 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
     }
     ```
 
+    Excepts:
+    - 401: Auth token not valid
+    - 400: filter not valid
+
 - `/api/get_site_info` [GET]
 
   the requests expect the parameter as an argument:
-    - `filter` -> all, visited, unvisited
+    - `id` -> id of the place
 
-  if filter is valid, returns:
-    ```
+  if id is valid, returns:
+  ```
+  {
+    "city": str,
+    "description": str,
+    "employees": 
+      [ # Only if employees are assigned 
+        {
+        "added_by": int,
+        "can_reward": bool,
+        "email": str,
+        "first_name": str,
+        "last_name": str,
+        "place_id": int,
+        "profile_picture": str 
+        }, ...
+      ],
+    "images": [
+      str,
+    ],
+    "latitude": str,
+    "longitude": str,
+    "name": str,
+    "region": str 
+  }
+  ```
 
-{
-"city": str,
-"description": str,
-"employees": [ # Only if employees are assigned {
-"added_by": int,
-"can_reward": bool,
-"email": str,
-"first_name": str,
-"last_name": str,
-"place_id": int,
-"profile_picture": str }
-],
-"images": [
-str,
-],
-"latitude": str,
-"longitude": str,
-"name": str,
-"region": str }
+  Excepts:
+  - 401 - Auth token not valid
+  - 404 - site id doesn't exist
 
-```
-
-- `/api/refresh-token` [POST]
+- `/api/refresh_token` [POST]
 
   the request requires header:
-  `Authorization` : valid JWT token
+  `Authorization` : valid Auth token
 
   if token is valid, returns:
-    ```
-    {
-        'token' : 'long JWT token'
-    }
-    ```
+  ```
+  {
+      'token' : 'long Auth token'
+  }
+  ```
+
+  Excepts:
+  - 401 : token not valid
 
 - `/api/get_self_info` [GET]
 
   the request requires header:
-  `Authorization` : valid JWT token
+  `Authorization` : valid Auth token
 
   if token is valid, returns:
     ```
     {
     "email": str,
     "employee_info": {
-        "added_by": {
-            "email": str,
-            "first_name": str,
-            "last_name": str,
-            "profile_picture": str
-        },
+        "added_by": int,
         "can_reward": bool,
         "email": str,
         "first_name": str,
@@ -191,61 +200,146 @@ str,
     "last_name": str,
     "profile_picture": str,
     "stamps": [
-        {
-            "employee_id": int,
-            "given_on": str,
-            "place_id": int,
-            "visitor_id": int
-        }
+      {
+        "employee_id": int,
+        "given_on": str,
+        "place_id": int,
+        "visitor_id": int
+      }, ...
     ]
+  }
+  ```
 
-}
-```
+  Excepts:
+  - 401 : not authorized
 
-- `/api/get_user_info` [GET]
+
+- `/api/get_employee_info` [GET]
 
   You currently get info about employees only
 
   the request requires header:
-  `Authorization` : valid JWT token
+  `Authorization` : valid Auth token
 
   the request requires the param as argument:
   `id` : user_id
 
-  upon valid JWT token and id, returns:
-    ```
-    {
-    "added_by": {
-        "email": str,
-        "first_name": str,
-        "last_name": str,
-        "profile_picture": str
-    },
-    "can_reward": bool,
-    "email": str,
+  upon valid Auth token and id, returns:
+  ```
+  {
+  "added_by": int,
+  "can_reward": bool,
+  "email": str,
+  "first_name": str,
+  "last_name": str,
+  "is_admin: bool,
+  "place_id": int,
+  "profile_picture": str
+  }
+  ```
+
+  Excepts:
+  - 401 - not authorized
+  - 422 - id argument missing
+  - 404 - Employee doesn't exist // user isn't employee
+
+- `/api/get_user_info` [GET]
+
+  Get general information about a certain user
+
+  the request expects args:
+    `id` - user_id
+  
+  if user exists, returns:
+  ```
+  {
     "first_name": str,
+    "is_admin": bool,
+    "is_employee": bool,
     "last_name": str,
-    "is_admin: bool,
-    "place_id": int,
     "profile_picture": str
-    }
-    ```
+  }
+  ```
+  
+  Excepts:
+  - 401 - not authorized
+  - 422 - id argument missing
+  - 404 - User doesn't exist
+
+- `/api/get_stamp_token` [GET]
+
+  For EMPLOYEES to get a stamp token, that WILL be scanned from the users
+
+  the request requires header:
+  `Authorization` : valid Auth token
+
+  the request requires the user to be an employee
+
+  if Auth is valid and user is employee:
+  ```
+  {
+    "stamp_token" : str
+  }
+  ```
+
+  excepts:
+  - 401: Not logged in
+  - 401: Not employee
+  - 400: Employee without assigned place
+
+- `/api/receive_stamp` [POST]
+  
+  For USERS to recieve a stamp, that IS scanned from an employee
+
+  the request requires header:
+  `Authorization` : valid auth token
+
+  the request requires the args as form-data:
+  `stamp_token` : str
+
+  if the user is authorized and token is valid:
+  ```
+  {
+    "message" : str
+  }
+  ```
+
+  Excepts:
+  - 401: not authorized
+  - 400: expired/invalid token
+  - 400: employee trying to give himself a stamp
+  - 400: already have this stamp
+
+
 - `/imageserver/tourist_sites` [GET]
 
   the request requires header:
-  `Authorization` : valid JWT token
+  `Authorization` : valid Auth token
 
   the request requires the param as argument:
   `name` : picture name **with** extension (.jpg, .png)
 
-  if name and JWT token valid, returns photo
+  if name and Auth token valid, returns photo
+
+  Excepts:
+  - 401 - invalid token
+  - 404 - picture not found
+  - 400 - file name not valid
+  - 422 - name argument missing
 
 - `/imageserver/profile_pictures` [GET]
 
   the request requires header:
-  `Authorization` : valid JWT token
+  `Authorization` : valid Auth token
 
   the request requires the param as argument:
   `name` : picture name **with** extension (.jpg, .png)
 
-  if name and JWT token valid, returns photo
+  if name and Auth token valid, returns photo
+
+  Excepts:
+  - 401 - invalid token
+  - 404 - picture not found
+  - 400 - file name not valid
+  - 422 - name argument missing
+  
