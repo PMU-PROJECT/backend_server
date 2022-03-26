@@ -268,12 +268,12 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
 
 - `/api/get_id_token` [GET]
 
-  For usersS to get a stamp token, that WILL be scanned from the employees
+  For users to get a stamp token, that will be scanned from the employees
 
   the request requires header:
   `Authorization` : valid Auth token
 
-  if Auth is valid:
+  if Auth is valid, returns:
   ```
   {
     "id_token" : str
@@ -282,12 +282,10 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
 
   excepts:
   - 401: Not logged in
-  - 401: Not employee
-  - 400: Employee without assigned place
 
 - `/api/make_stamp` [POST]
   
-  For EMPLOYEES to make a stamp, that IS scanned from an employee
+  For EMPLOYEES to make a stamp
 
   the request requires header:
   `Authorization` : valid auth token
@@ -295,7 +293,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   the request requires the args as form-data:
   `id_token` : str
 
-  if the user is authorized and token is valid:
+  if the user is employee, authorized and token is valid:
   ```
   {
     "message" : str
@@ -306,7 +304,6 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   - 401: not authorized
   - 400: expired/invalid token
   - 400: employee trying to give himself a stamp
-  - 400: already have this stamp
 
 
 - `/imageserver/tourist_sites` [GET]
