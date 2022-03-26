@@ -266,19 +266,17 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   - 422 - id argument missing
   - 404 - User doesn't exist
 
-- `/api/get_stamp_token` [GET]
+- `/api/get_id_token` [GET]
 
-  For EMPLOYEES to get a stamp token, that WILL be scanned from the users
+  For usersS to get a stamp token, that WILL be scanned from the employees
 
   the request requires header:
   `Authorization` : valid Auth token
 
-  the request requires the user to be an employee
-
-  if Auth is valid and user is employee:
+  if Auth is valid:
   ```
   {
-    "stamp_token" : str
+    "id_token" : str
   }
   ```
 
@@ -287,15 +285,15 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   - 401: Not employee
   - 400: Employee without assigned place
 
-- `/api/receive_stamp` [POST]
+- `/api/make_stamp` [POST]
   
-  For USERS to recieve a stamp, that IS scanned from an employee
+  For EMPLOYEES to make a stamp, that IS scanned from an employee
 
   the request requires header:
   `Authorization` : valid auth token
 
   the request requires the args as form-data:
-  `stamp_token` : str
+  `id_token` : str
 
   if the user is authorized and token is valid:
   ```

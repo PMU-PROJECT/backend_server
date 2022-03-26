@@ -38,7 +38,7 @@ application = Quart(__name__, )
 application = cors(
     application,
     allow_origin="*",
-    allow_headers=['Authorization', 'Content-type', ],
+    allow_headers=['Authorization', 'Content-Type', ],
     allow_methods=['GET', 'POST', ],
 )
 
@@ -178,13 +178,13 @@ async def id_token() -> Tuple[Dict[str, str], int]:
         }, 200
 
 
-@application.route('/api/receive_stamp', methods=['POST', ], )
+@application.route('/api/make_stamp', methods=['POST', ], )
 async def receive_stamp() -> Tuple[Dict[str, str], int]:
     """
     Endpoint for receiving a stamp from a scanned token.
 
     args:
-        'stamp_token' : str -> scanned token
+        'id_token' : str -> scanned token
 
     returns:
         {"message" : str} on success
@@ -198,7 +198,7 @@ async def receive_stamp() -> Tuple[Dict[str, str], int]:
     async with async_session() as session:
 
         # Make a stamp object
-        stamp_token: str = (await request.form).get('stamp_token')
+        stamp_token: str = (await request.form).get('id_token')
         logger.debug(f"User (id:{g.authenticated_user}) requested a stamp")
 
         try:
@@ -206,7 +206,7 @@ async def receive_stamp() -> Tuple[Dict[str, str], int]:
                 session, stamp_token, g.authenticated_user)
             logger.debug("Stamp successfully made!")
         except InvalidStampToken:
-            return {'error': "The stamp token has expired or isn't valid!"}, 400
+            return {'error': "The stamp token has expired or isn't valid or user isn't employee!"}, 400
 
         if stamp.visitor_id == stamp.employee_id:
             logger.warning(
