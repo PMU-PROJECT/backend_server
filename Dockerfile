@@ -10,6 +10,8 @@ RUN apt update
 
 RUN apt -y install gcc
 
+RUN python -m pip install --upgrade pip
+
 RUN pip3 install -r requirements.txt
 
 #TODO expose ports based on conf.cfg
