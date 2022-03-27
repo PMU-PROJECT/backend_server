@@ -90,6 +90,7 @@ async def get_all_sites():
             'image':str,
             'name':str,
             'region':str
+            'is_stamped':bool
         },
     ]
 

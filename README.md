@@ -117,6 +117,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
             "image": str,
             "name": str,
             "region": str
+            "is_stamped": bool
         },
     ]
     }
