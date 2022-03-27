@@ -48,10 +48,12 @@ async def make_stamp(session: AsyncSession, token: str, employee_id: int) -> Sta
     '''
     employee = await Employees.by_id(session, employee_id)
     if employee is None:
+        logger.debug("Employee doesn't exist!")
         raise InvalidStampToken()
 
     place_id = employee.get("place_id")
     if place_id is None:
+        logger.debug("Employee doesn't have an assigned place!")
         raise InvalidStampToken()
 
     try:

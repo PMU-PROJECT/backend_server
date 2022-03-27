@@ -548,7 +548,7 @@ async def profile_pictures():
         )
 
         if path.isfile(file_path):
-            return await send_file(file_path, mimetype='image/gif', as_attachment=True)
+            return await send_file(file_path, mimetype='image/gif')
         else:
             return {"error": "Picture not found", }, 404
 
