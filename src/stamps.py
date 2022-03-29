@@ -61,17 +61,18 @@ async def make_stamp(session: AsyncSession, token: str, employee_id: int) -> Sta
         token: List[str] = __dec_box.decrypt(bytes.fromhex(token)) \
             .decode('utf-8').split('\n')
 
-        logger.debug("Token decoded : {token}")
-        logger.debug(f"time now :  {datetime.utcnow()}")
-        logger.debug(f"token time: {datetime.fromisoformat(token[1])}")
+        if len(token == 2):
+            logger.debug("Token decoded : {token}")
+            logger.debug(f"time now :  {datetime.utcnow()}")
+            logger.debug(f"token time: {datetime.fromisoformat(token[1])}")
 
-        # Check if we have the 2 fields, if token hasn't expired, make a stamp
-        if len(token) == 2 and datetime.utcnow() < datetime.fromisoformat(token[1]):
-            logger.debug("Stamp is valid, return stamp...")
-            return Stamp(employee_id, place_id, int(token[0]))
-        else:
-            logger.debug("Stamp invalid, raise exception")
-            raise InvalidStampToken()
+            # Check if we have the 2 fields, if token hasn't expired, make a stamp
+            if datetime.utcnow() < datetime.fromisoformat(token[1]):
+                logger.debug("Stamp is valid, return stamp...")
+                return Stamp(employee_id, place_id, int(token[0]))
+            else:
+                logger.debug("Stamp invalid, raise exception")
+                raise InvalidStampToken()
     except (ValueError, TypeError, CryptoError) as ex:
         logger.debug(ex)
         logger.debug("Decrypting error...")
