@@ -1,15 +1,18 @@
 from typing import Any, Dict, List
 
-from sqlalchemy.exc import DatabaseError, IntegrityError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import select, insert
+from sqlalchemy.sql.functions import count
 
 from .model.stamps import Stamps as StampsModel
+from ..exceptions import DatabaseError
+from ..stamps import Stamp
 
 
 class Stamps(object):
     @staticmethod
-    async def add_stamp(session: AsyncSession, stamp: StampsModel) -> bool:
+    async def add_stamp(session: AsyncSession, stamp: Stamp) -> bool:
         try:
             await session.execute(
                 insert(
@@ -50,3 +53,15 @@ class Stamps(object):
                 ).all(),
             ),
         )
+
+    @staticmethod
+    async def stamp_count(session: AsyncSession, visitor_id: int) -> int:
+        return (
+            await session.execute(
+                select(
+                    [count(), ],
+                ).where(
+                    StampsModel.visitor_id == visitor_id,
+                ),
+            )
+        ).scalar()

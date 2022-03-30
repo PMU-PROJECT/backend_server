@@ -1,5 +1,5 @@
 from sqlalchemy.schema import Column
-from sqlalchemy.types import Unicode
+from sqlalchemy.types import Unicode, Integer
 
 from . import ORMBase, id_column
 
@@ -10,3 +10,5 @@ class RewardTypes(ORMBase):
     name = Column('name', Unicode(127, ), )
 
     description = Column('description', Unicode(511, ), )
+
+    minimum_stamps = Column('minimum_stamps', Integer())

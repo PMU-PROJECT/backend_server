@@ -143,18 +143,13 @@ async def get_user_info(session: AsyncSession, user_id: int):
     if user_db is None:
         return None
 
-    user = {}
-
-    # Get only needed info from db request
-    user['first_name'] = user_db.get('first_name')
-    user['last_name'] = user_db.get('last_name')
-    user['profile_picture'] = user_db.get('profile_picture')
-
-    # Needed requests
-    user['is_employee'] = bool(await Employees.exists(session, user_id))
-    user['is_admin'] = bool(await Administrators.exists(session, user_id))
-
-    return user
+    return {
+        'first_name': user_db.get('first_name'),
+        'last_name': user_db.get('last_name'),
+        'profile_picture': user_db.get('profile_picture'),
+        'is_employee': bool(await Employees.exists(session, user_id)),
+        'is_admin': bool(await Administrators.exists(session, user_id))
+    }
 
 
 async def get_employee_info(session: AsyncSession, employee_id: int):

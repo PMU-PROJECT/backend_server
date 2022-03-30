@@ -4,7 +4,6 @@ from sqlalchemy.types import Numeric, Unicode
 
 from . import ORMBase, id_column, id_ref_column
 from .cities import Cities
-from .regions import Regions
 
 
 class Places(ORMBase):

@@ -3,8 +3,7 @@ from typing import Any, Dict, List, Union, Optional
 from sqlalchemy import literal
 from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import Join
-from sqlalchemy.sql.expression import select
+from sqlalchemy.sql.expression import select, Select
 
 from .model.employees import Employees as EmployeesModel
 from .model.users import Users as UsersModel
@@ -43,7 +42,7 @@ class Employees(object):
             raise DatabaseError(ex)
 
     @staticmethod
-    def __query() -> Join:
+    def __query() -> Select:
         return select(
             [
                 UsersModel.first_name,

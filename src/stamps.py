@@ -40,12 +40,12 @@ def generate_stamp_token(user_id: int) -> str:
 
 
 async def make_stamp(session: AsyncSession, token: str, employee_id: int) -> Stamp:
-    '''
+    """
     Make a stamp based on token scanned from user and employee_Did
 
     excepts:
         employee doesn't exist or 
-    '''
+    """
     employee = await Employees.by_id(session, employee_id)
     if employee is None:
         logger.debug("Employee doesn't exist!")
@@ -61,7 +61,7 @@ async def make_stamp(session: AsyncSession, token: str, employee_id: int) -> Sta
         token: List[str] = __dec_box.decrypt(bytes.fromhex(token)) \
             .decode('utf-8').split('\n')
 
-        if len(token == 2):
+        if len(token) == 2:
             logger.debug("Token decoded : {token}")
             logger.debug(f"time now :  {datetime.utcnow()}")
             logger.debug(f"token time: {datetime.fromisoformat(token[1])}")

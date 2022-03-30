@@ -2,7 +2,7 @@ version: '3.3'
 
 services:
   web:
-    image: #URL OF IMAGE
+    image: my.repo:port/image #URI OF IMAGE
     command: gunicorn --config gunicorn_config.py app:application
     ports:
       - "37888:37888"

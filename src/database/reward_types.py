@@ -1,10 +1,11 @@
 from typing import Any, Dict, List
 
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import select
 
 from .model.reward_types import RewardTypes as RewardTypesModel
-from ..exceptions import DatabaseError
+from ..exceptions import BadUserRequest, DatabaseError
 
 
 class RewardTypes(object):
@@ -22,5 +23,24 @@ class RewardTypes(object):
                     ).all(),
                 ),
             )
+        except Exception as ex:
+            raise DatabaseError(ex)
+
+    @staticmethod
+    async def minimum_stamps(session: AsyncSession, reward_id: int) -> int:
+        try:
+            return (
+                await session.execute(
+                    select(
+                        [RewardTypesModel.minimum_stamps, ],
+                    ).where(
+                        RewardTypesModel.id == reward_id,
+                    ).limit(
+                        1,
+                    ),
+                )
+            ).scalar_one()
+        except NoResultFound:
+            raise BadUserRequest("No such reward exists!")
         except Exception as ex:
             raise DatabaseError(ex)

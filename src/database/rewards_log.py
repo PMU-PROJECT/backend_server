@@ -5,7 +5,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import select, insert
 
 from .model.rewards_log import RewardsLog as RewardsLogModel
-from ..exceptions import DatabaseError
+from .reward_types import RewardTypes
+from .stamps import Stamps
+from ..exceptions import BadUserRequest, DatabaseError
 
 
 class RewardsLog(object):
@@ -30,6 +32,9 @@ class RewardsLog(object):
 
     @staticmethod
     async def insert(session: AsyncSession, visitor_id: int, reward_id: int, employee_id: int) -> bool:
+        if await Stamps.stamp_count(session, visitor_id) < await RewardTypes.minimum_stamps(session, reward_id):
+            raise BadUserRequest("User doesn't have enough stamps!")
+
         try:
             await session.execute(
                 insert(

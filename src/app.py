@@ -193,12 +193,10 @@ async def id_token() -> Tuple[Dict[str, str], int]:
         400: Employee without assigned place
 
     """
-    async with async_session() as session:
+    logger.debug(
+        f"user with id {g.authenticated_user} requested a ID token")
 
-        logger.debug(
-            f"user with id {g.authenticated_user} requested a ID token")
-
-        return {
+    return {
             'id_token': generate_stamp_token(
                 g.authenticated_user,
             ),
@@ -240,7 +238,7 @@ async def receive_stamp() -> Tuple[Dict[str, str], int]:
                 f'Employee (id:{g.authenticated_user}) tried to give themselves a stamp')
             return {'error': "You can't give yourself stamps!"}, 400
 
-        # If adding stamp to DB is succesful
+        # If adding stamp to DB is successful
         if await Stamps.add_stamp(session, stamp):
             logger.debug("Stamp saved to Database")
             return {'message': 'Stamp received!'}, 200
@@ -355,10 +353,10 @@ async def login():
         user_id, pw_hash = await LocalUsers.by_email(session, email, )
 
         if verify_password(password, pw_hash, ):
-            logger.debug(f"Succesful login for (id: {user_id})")
+            logger.debug(f"Successful login for (id: {user_id})")
             return {'token': generate_token(user_id, ), }, 200
 
-        logger.debug("Unsuccesful login")
+        logger.debug("Unsuccessful login")
         # returns 400 error
         raise AuthenticationError()
 
@@ -435,15 +433,15 @@ async def employee_info():
         if employee is None:
             logger.warning(
                 f"user with id:{g.authenticated_user} requested info about a non-employee!")
-            return ({"error": "Employee doesn't exist!", }, 404)
+            return {"error": "Employee doesn't exist!", }, 404
         else:
-            return (employee, 200)
+            return employee, 200
 
 
 @application.route('/api/get_user_info', methods=['GET'], )
 async def user_info():
     """
-    Get info about an user, based on ID
+    Get info about a user, based on ID
 
     params:
         id argument -> user_id
