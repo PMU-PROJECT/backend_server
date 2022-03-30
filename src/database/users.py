@@ -1,10 +1,13 @@
 from typing import Any, Dict, Union
 
-from sqlalchemy import select, literal
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.sql.expression import insert, select, literal
 from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .model.users import Users as UsersModel
+from ..config.logger_config import logger
+from ..exceptions import BadUserRequest
 
 
 class Users(object):
@@ -42,3 +45,32 @@ class Users(object):
         ).first()
 
         return None if result is None else result._asdict()
+
+    @staticmethod
+    async def insert(session: AsyncSession, first_name: str, last_name: str, email: str) -> int:
+        if await Users.exists_by_email(session, email):
+            logger.debug("Email already exists")
+
+            raise BadUserRequest("User with this email already exists!")
+
+        # Only email has strict syntax. If syntax not valid, raise exception
+        try:
+            user_id: int = (
+                await session.execute(
+                    insert(
+                        UsersModel,
+                    ).values(
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                    ).returning(
+                        UsersModel.id,
+                    ),
+                )
+            ).scalar()
+
+            await session.flush()
+
+            return user_id
+        except IntegrityError:
+            raise BadUserRequest("Email not valid")
