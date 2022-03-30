@@ -31,7 +31,7 @@ def verify_password(password: str, password_hash: bytes) -> bool:
 
 def generate_token(data) -> str:
     return __enc_box.encrypt(
-        f"{data}\n{(datetime.utcnow() + timedelta(hours=3)).isoformat()}"
+        f"{data}\n{(datetime.utcnow() + timedelta(days=7)).isoformat()}"
         f"".encode('utf-8')
     ).hex()
 

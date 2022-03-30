@@ -45,17 +45,24 @@ async def get_tourist_sites(session: AsyncSession, site_type: AllSitesFilter, vi
             if site.get('id') in stamp_places_id:
                 continue
 
-        # FIXME image will fail if there are no images to the place
+        # Fetch image id
+        image_id = (
+            await Images.all_by_place(
+                session, site.get('id'),
+            )
+        )
+
+        # Get first element of array only after we know we have an image
+        if image_id is not None:
+            image_id = image_id[0]
+
         current_site = {
             'id': site['id'],
-            'image': (
-                await Images.all_by_place(
-                    session, site.get('id'),
-                )
-            )[0],
+            'image': image_id,
             'region': site['region_name'],
             'city': site['city_name'],
             'name': site['name'],
+            'is_stamped': bool(site.get('id') in stamp_places_id)
         }
 
         # get only 1 image for visualisation of the card

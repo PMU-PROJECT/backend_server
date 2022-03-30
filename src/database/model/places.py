@@ -8,7 +8,6 @@ from .regions import Regions
 
 
 class Places(ORMBase):
-    region_id = id_ref_column('region_id', Regions.id, )
 
     city_id = id_ref_column('city_id', Cities.id, )
 

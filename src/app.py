@@ -30,13 +30,15 @@ UNAUTHENTICATED_URLS: List[str] = [
     '/api/login',
     '/api/registration',
     '/api/oauth2/google',
+    # '/imageserver/tourist_sites',
+    # '/imageserver/profile_pictures'
 ]
 
 application = Quart(__name__, )
 application = cors(
     application,
     allow_origin="*",
-    allow_headers=['Authorization', 'Content-type', ],
+    allow_headers=['Authorization', 'Content-Type', ],
     allow_methods=['GET', 'POST', ],
 )
 
@@ -88,6 +90,7 @@ async def get_all_sites():
             'image':str,
             'name':str,
             'region':str
+            'is_stamped':bool
         },
     ]
 
@@ -149,11 +152,11 @@ async def get_site_info():
 # Stamping endpoints
 
 
-@application.route('/api/get_stamp_token', methods=['GET', ], )
-async def stamp_token() -> Tuple[Dict[str, str], int]:
+@application.route('/api/get_id_token', methods=['GET', ], )
+async def id_token() -> Tuple[Dict[str, str], int]:
     """
-    Parameter for getting a token to be scanned (via QR)
-    Requires user to be an employee. Token has a 30sec validity.
+    Parameter for getting an identification token to be scanned (via QR)
+    Token has a 30sec validity.
 
     returns:
         {"stamp_token" : str}
@@ -167,40 +170,22 @@ async def stamp_token() -> Tuple[Dict[str, str], int]:
     async with async_session() as session:
 
         logger.debug(
-            f"user with id {g.authenticated_user} requested a stamp token")
-
-        # Get employee info
-        employee: Optional[Dict[str, Any]] = await Employees.by_id(session, g.authenticated_user)
-
-        if employee is None:
-            logger.warning(
-                f"Non employee (id:{g.authenticated_user}) requested stamp token!")
-            return {
-                'error': 'Only allowed for employees!',
-            }, 401
-
-        if employee.get('place_id') is None:
-            logger.warning(
-                f"Employee with id {g.authenticated_user} doesn't have an allocated place!")
-            return {
-                'error': 'You dont have an assigned place! Please contact an admin',
-            }, 400
+            f"user with id {g.authenticated_user} requested a ID token")
 
         return {
-            'stamp_token': generate_stamp_token(
+            'id_token': generate_stamp_token(
                 g.authenticated_user,
-                employee['place_id'],
             ),
         }, 200
 
 
-@application.route('/api/receive_stamp', methods=['POST', ], )
+@application.route('/api/make_stamp', methods=['POST', ], )
 async def receive_stamp() -> Tuple[Dict[str, str], int]:
     """
     Endpoint for receiving a stamp from a scanned token.
 
     args:
-        'stamp_token' : str -> scanned token
+        'id_token' : str -> scanned token
 
     returns:
         {"message" : str} on success
@@ -214,15 +199,15 @@ async def receive_stamp() -> Tuple[Dict[str, str], int]:
     async with async_session() as session:
 
         # Make a stamp object
-        stamp_token: str = (await request.form).get('stamp_token')
+        stamp_token: str = (await request.form).get('id_token')
         logger.debug(f"User (id:{g.authenticated_user}) requested a stamp")
-        logger.debug(f"stamp_token type : {type(stamp_token)}")
 
         try:
-            stamp: Stamp = make_stamp(stamp_token, g.authenticated_user)
+            stamp: Stamp = await make_stamp(
+                session, stamp_token, g.authenticated_user)
             logger.debug("Stamp successfully made!")
         except InvalidStampToken:
-            return {'error': "The stamp token has expired or isn't valid!"}, 400
+            return {'error': "The stamp token has expired or isn't valid or user isn't employee!"}, 400
 
         if stamp.visitor_id == stamp.employee_id:
             logger.warning(
@@ -564,7 +549,7 @@ async def profile_pictures():
         )
 
         if path.isfile(file_path):
-            return await send_file(file_path, mimetype='image/gif', )
+            return await send_file(file_path, mimetype='image/gif')
         else:
             return {"error": "Picture not found", }, 404
 
