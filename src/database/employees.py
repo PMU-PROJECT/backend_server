@@ -8,6 +8,7 @@ from sqlalchemy.sql.expression import select
 
 from .model.employees import Employees as EmployeesModel
 from .model.users import Users as UsersModel
+from ..exceptions import DatabaseError
 
 
 class Employees(object):
@@ -24,10 +25,8 @@ class Employees(object):
         throws:
             ValueError: user_id not int
         """
-        user_id = int(user_id)
-
-        return bool(
-            (
+        try:
+            return (
                 await session.execute(
                     select(
                         [literal(True), ],
@@ -39,8 +38,9 @@ class Employees(object):
                         ).exists(),
                     )
                 )
-            ).scalar()
-        )
+            ).scalar() is True
+        except Exception as ex:
+            raise DatabaseError(ex)
 
     @staticmethod
     def __query() -> Join:
@@ -62,27 +62,33 @@ class Employees(object):
 
     @staticmethod
     async def by_id(session: AsyncSession, employee_id: int) -> Optional[Dict[str, Any]]:
-        result: Union[None, Row] = (
-            await session.execute(
-                Employees.__query().where(
-                    EmployeesModel.id == employee_id,
-                ),
-            )
-        ).first()
+        try:
+            result: Union[None, Row] = (
+                await session.execute(
+                    Employees.__query().where(
+                        EmployeesModel.id == employee_id,
+                    ),
+                )
+            ).first()
+        except Exception as ex:
+            raise DatabaseError(ex)
 
         return None if result is None else result._asdict()
 
     @staticmethod
     async def all_by_place(session: AsyncSession, place_id: int) -> List[Dict[str, Any]]:
-        return list(
-            map(
-                lambda result: result._asdict(),
-                await (
-                    await session.stream(
-                        Employees.__query().where(
-                            EmployeesModel.place_id == place_id,
-                        ),
-                    )
-                ).all(),
-            ),
-        )
+        try:
+            return list(
+                map(
+                    lambda result: result._asdict(),
+                    await (
+                        await session.stream(
+                            Employees.__query().where(
+                                EmployeesModel.place_id == place_id,
+                            ),
+                        )
+                    ).all(),
+                ),
+            )
+        except Exception as ex:
+            raise DatabaseError(ex)

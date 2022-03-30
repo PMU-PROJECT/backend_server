@@ -7,6 +7,7 @@ from sqlalchemy.sql.expression import select, Select
 from .model.cities import Cities as CitiesModel
 from .model.places import Places as PlacesModel
 from .model.regions import Regions as RegionsModel
+from ..exceptions import DatabaseError
 
 
 class Places(object):
@@ -21,15 +22,21 @@ class Places(object):
 
     @staticmethod
     async def by_id(session: AsyncSession, place_id: int) -> Optional[Dict[str, Any]]:
-        result: Union[None, Row] = (await session.execute(
-            Places.__query().where(
-                PlacesModel.id == place_id, ), )).first()
+        try:
+            result: Union[None, Row] = (await session.execute(
+                Places.__query().where(
+                    PlacesModel.id == place_id, ), )).first()
+        except Exception as ex:
+            raise DatabaseError(ex)
 
         return None if result is None else result._asdict()
 
     @staticmethod
     async def all(session: AsyncSession) -> List[Dict[str, Any]]:
-        return list(
-            map(
-                lambda result: result._asdict(), await (await session.stream(
-                    Places.__query(), )).all(), ), )
+        try:
+            return list(
+                map(
+                    lambda result: result._asdict(), await (await session.stream(
+                        Places.__query(), )).all(), ), )
+        except Exception as ex:
+            raise DatabaseError(ex)

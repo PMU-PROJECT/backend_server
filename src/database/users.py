@@ -7,42 +7,48 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .model.users import Users as UsersModel
 from ..config.logger_config import logger
-from ..exceptions import BadUserRequest
+from ..exceptions import BadUserRequest, DatabaseError
 
 
 class Users(object):
     @staticmethod
     async def exists_by_email(session: AsyncSession, email: str) -> bool:
-        return (
-                   await session.execute(
-                       select(
-                           literal(True),
-                       ).where(
-                           select(
-                               UsersModel.email,
-                           ).where(
-                               UsersModel.email == email,
-                           ).exists(),
-                       )
-                   )
-               ).scalar() is True
+        try:
+            return (
+                await session.execute(
+                    select(
+                        [literal(True), ],
+                    ).where(
+                        select(
+                            UsersModel.email,
+                        ).where(
+                            UsersModel.email == email,
+                        ).exists(),
+                    )
+                )
+            ).scalar() is True
+        except Exception as ex:
+            raise DatabaseError(ex)
 
     @staticmethod
     async def by_id(session: AsyncSession, user_id: int) -> Union[None, Dict[str, Any]]:
-        result: Union[None, Row] = (
-            await session.execute(
-                select(
-                    [
-                        UsersModel.first_name,
-                        UsersModel.last_name,
-                        UsersModel.email,
-                        UsersModel.profile_picture,
-                    ],
-                ).where(
-                    UsersModel.id == user_id,
-                ),
-            )
-        ).first()
+        try:
+            result: Union[None, Row] = (
+                await session.execute(
+                    select(
+                        [
+                            UsersModel.first_name,
+                            UsersModel.last_name,
+                            UsersModel.email,
+                            UsersModel.profile_picture,
+                        ],
+                    ).where(
+                        UsersModel.id == user_id,
+                    ),
+                )
+            ).first()
+        except Exception as ex:
+            raise DatabaseError(ex)
 
         return None if result is None else result._asdict()
 
@@ -74,3 +80,5 @@ class Users(object):
             return user_id
         except IntegrityError:
             raise BadUserRequest("Email not valid")
+        except Exception as ex:
+            raise DatabaseError(ex)
