@@ -1,5 +1,6 @@
 # System imports
 import os
+import traceback
 from os import path
 from re import match
 from typing import List, Any, Dict, Optional, Tuple
@@ -7,20 +8,15 @@ from typing import List, Any, Dict, Optional, Tuple
 # Dependency imports
 from quart import Quart, request, send_file, g
 from quart_cors import cors
-from sqlalchemy import insert
-from sqlalchemy.exc import IntegrityError
 
 # Own imports
-from .response_formaters import get_employee_info, get_site_by_id, get_tourist_sites, get_self_info, get_user_info
+from .exceptions import RaisedFrom, ServerException
+from .response_formatters import get_employee_info, get_site_by_id, get_tourist_sites, get_self_info, get_user_info
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
 from .database import db_init, async_session
-from .database.employees import Employees
 from .database.local_users import LocalUsers
-from .database.model.local_users import LocalUsers as LocalUsersModel
-from .database.model.users import Users as UsersModel
 from .database.stamps import Stamps
-from .database.users import Users
 from .google_api import google_api
 from .stamps import InvalidStampToken, generate_stamp_token, make_stamp, Stamp
 from .utils.all_sites_filter import AllSitesFilter
@@ -42,13 +38,43 @@ application = cors(
     allow_methods=['GET', 'POST', ],
 )
 
+
 # Initialize connection and make tables if not exist
 application.before_serving(db_init, )
+
+
 application.register_error_handler(
     AuthenticationError,
     lambda _: (
         {'error': 'Authentication failed!', }, 401
     ),
+)
+
+
+def server_exception_handler(ex: Exception) -> Tuple[Dict[str, Any], int]:
+    if not isinstance(ex, ServerException):
+        return {'error': 'Internal Server Error! Wrong exception handler used!', }, 500
+
+    server_exception: ServerException = ex
+
+    del ex
+
+    traceback.print_exception(
+        type(server_exception), server_exception, server_exception.__traceback__, )
+
+    if isinstance(server_exception, RaisedFrom):
+        traceback.print_exception(
+            type(server_exception.source_exception),
+            server_exception.source_exception,
+            server_exception.source_exception.__traceback__,
+        )
+
+    return {'error': server_exception.message, }, server_exception.http_code
+
+
+application.register_error_handler(
+    ServerException,
+    server_exception_handler,
 )
 
 
@@ -254,10 +280,10 @@ async def registration():
         logger.debug("User provided wrong request format")
         return {"error": "Wrong request body!"}
 
-    first_name = form.get('first_name', type=str, )
-    last_name = form.get('last_name', type=str, )
-    email = form.get('email', type=str, )
-    password = form.get('password', type=str, )
+    first_name: Optional[str] = form.get('first_name', type=str, )
+    last_name: Optional[str] = form.get('last_name', type=str, )
+    email: Optional[str] = form.get('email', type=str, )
+    password: Optional[str] = form.get('password', type=str, )
 
     # If we don't have all the needed info, return
     if None in (first_name, last_name, email, password):
@@ -278,46 +304,20 @@ async def registration():
         logger.debug("Password check failed")
         return {'error': 'Password too short. It must be 6 characters or longer', }, 400
 
+    user_id: int
+
     async with async_session() as session:
-        if await Users.exists_by_email(session, email):
-            logger.debug("Email already exists")
-            return {'error': 'User with this email already exists!', }, 400
-
-        # TODO Open a transaction
-        # TODO move to users helper
-        # Only email has strict syntax. If syntax not valid, return
-        try:
-            user_id: int = (
-                await session.execute(
-                    insert(
-                        UsersModel,
-                    ).values(
-                        first_name=first_name,
-                        last_name=last_name,
-                        email=email,
-                    ).returning(
-                        UsersModel.id,
-                    ),
-                )
-            ).scalar()
-        except IntegrityError:
-            return {"error": "Email not valid", }, 400
-
-        # Store the password hash
-        await session.execute(
-            insert(
-                LocalUsersModel,
-            ).values(
-                user_id=user_id,
-                pw_hash=hash_password(password, ),
-            ),
+        user_id: int = await LocalUsers.insert(
+            session,
+            first_name,
+            last_name,
+            email,
+            hash_password(password),
         )
 
-        await session.commit()
+    logger.debug("Registration success!")
 
-        logger.debug("Registration success!")
-
-        return {'token': generate_token(user_id, ), }, 200
+    return {'token': generate_token(user_id, ), }, 200
 
 
 @application.route('/api/login', methods=['POST', ], )
