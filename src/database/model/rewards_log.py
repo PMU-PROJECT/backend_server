@@ -4,7 +4,7 @@ from sqlalchemy.types import DateTime
 
 from . import ORMBase, id_ref_column
 from .employees import Employees
-from .rewards import Rewards
+from .reward_types import RewardTypes
 from .users import Users
 
 
@@ -16,7 +16,7 @@ class RewardsLog(ORMBase):
     employee_id = id_ref_column('employee_id', Employees.id, )
 
     reward_id = id_ref_column(
-        'reward_id', Rewards.id, options={
+        'reward_id', RewardTypes.id, options={
             'primary_key': True, }, )
 
     given_on = Column('given_on', DateTime(

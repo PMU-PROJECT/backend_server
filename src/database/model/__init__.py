@@ -7,7 +7,7 @@ from .images import Images
 from .local_users import LocalUsers
 from .places import Places
 from .regions import Regions
-from .rewards import Rewards
+from .reward_types import RewardTypes
 from .rewards_log import RewardsLog
 from .stamps import Stamps
 from .users import Users
