@@ -118,11 +118,13 @@ async def get_self_info(session: AsyncSession, user_id: int):
     Function for generating JSON-able user info
     """
 
-    user = dict(await Users.by_id(session, user_id))
+    user = await Users.by_id(session, user_id)
 
     # if None, no point in continuing
     if user is None:
         return None
+
+    user = dict(user)
 
     # Needed requests
     user['stamps'] = await Stamps.all(session, user_id)

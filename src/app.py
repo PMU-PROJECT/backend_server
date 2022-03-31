@@ -136,7 +136,7 @@ async def get_all_sites():
 
     logger.debug(f"User {g.authenticated_user} requested all site info")
 
-    async with async_session() as session:
+    async with async_session.begin() as session:
         sites = await get_tourist_sites(session, site_type, g.authenticated_user)
 
     return sites, 200
@@ -170,7 +170,7 @@ async def get_site_info():
     logger.debug(
         f"User {g.authenticated_user} requested site {site_id} detailed info")
 
-    async with async_session() as session:
+    async with async_session.begin() as session:
         site = await get_site_by_id(session, site_id)
 
     return (site, 200) if site is not None else ({"error": "Site not found", }, 404)
@@ -197,10 +197,10 @@ async def id_token() -> Tuple[Dict[str, str], int]:
         f"user with id {g.authenticated_user} requested a ID token")
 
     return {
-            'id_token': generate_stamp_token(
-                g.authenticated_user,
-            ),
-        }, 200
+        'id_token': generate_stamp_token(
+            g.authenticated_user,
+        ),
+    }, 200
 
 
 @application.route('/api/make_stamp', methods=['POST', ], )
@@ -220,7 +220,7 @@ async def receive_stamp() -> Tuple[Dict[str, str], int]:
         400: employee trying to give himself a stamp
         400: already have this stamp
     """
-    async with async_session() as session:
+    async with async_session.begin() as session:
 
         # Make a stamp object
         stamp_token: str = (await request.form).get('id_token')
@@ -304,7 +304,7 @@ async def registration():
 
     user_id: int
 
-    async with async_session() as session:
+    async with async_session.begin() as session:
         user_id: int = await LocalUsers.insert(
             session,
             first_name,
@@ -349,7 +349,7 @@ async def login():
         logger.debug("User didn't provide enough info")
         return {"error": "Insufficient information", }, 422
 
-    async with async_session() as session:
+    async with async_session.begin() as session:
         user_id, pw_hash = await LocalUsers.by_email(session, email, )
 
         if verify_password(password, pw_hash, ):
@@ -400,7 +400,7 @@ async def self_info():
     """
     user_id = g.authenticated_user
     logger.debug(f'User {user_id} requested self info')
-    async with async_session() as session:
+    async with async_session.begin() as session:
         user = await get_self_info(session, user_id, )
 
     return user, 200
@@ -428,7 +428,7 @@ async def employee_info():
     if user_id is None:
         return {"error": "Insufficient information", }, 422
 
-    async with async_session() as session:
+    async with async_session.begin() as session:
         employee = await get_employee_info(session, user_id, )
         if employee is None:
             logger.warning(
@@ -462,9 +462,10 @@ async def user_info():
     if user_id is None:
         return {"error": "Insufficient information", }, 422
 
-    async with async_session() as session:
+    async with async_session.begin() as session:
         user = await get_user_info(session, user_id, )
         return ({"error": "User doesn't exist!", }, 404) if user is None else (user, 200)
+
 
 # ###### IMAGE SERVER HANDLERS ######
 
