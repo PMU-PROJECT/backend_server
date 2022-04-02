@@ -19,7 +19,10 @@ class RewardsLog(object):
                     lambda result: result._asdict(), (
                         await session.execute(
                             select(
-                                [RewardsLogModel, ],
+                                RewardsLogModel.employee_id,
+                                RewardsLogModel.visitor_id,
+                                RewardsLogModel.reward_id,
+                                RewardsLogModel.given_on,
                             ).where(
                                 RewardsLogModel.visitor_id == visitor_id,
                             ),
