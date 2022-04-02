@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.expression import select
+from sqlalchemy.sql.expression import select, and_
 
 from .model.reward_types import RewardTypes as RewardTypesModel
 from ..exceptions import BadUserRequest, DatabaseError
@@ -43,7 +43,8 @@ class RewardTypes(object):
                                 RewardTypesModel.minimum_stamps,
                                 RewardTypesModel.picture,
                             ).where(
-                                RewardTypesModel.minimum_stamps <= stamp_count and RewardTypesModel.id not in reward_id_blocklist
+                                and_(RewardTypesModel.minimum_stamps <= stamp_count,
+                                     RewardTypesModel.id not in reward_id_blocklist)
                             ),
                         )
                     ).all(),
@@ -52,7 +53,7 @@ class RewardTypes(object):
         except Exception as ex:
             raise DatabaseError(ex)
 
-    @staticmethod
+    @ staticmethod
     async def minimum_stamps(session: AsyncSession, reward_id: int) -> int:
         try:
             return (
