@@ -17,5 +17,4 @@ class RewardTypes(ORMBase):
     picture = Column(
         'picture',
         String(127, ),
-        default='default_profile_pic.png',
     )
