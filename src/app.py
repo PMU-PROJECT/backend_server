@@ -628,7 +628,42 @@ async def profile_pictures():
 
 @application.route('/imageserver/rewards', methods=['GET'], )
 async def reward_pictures():
-    pass
+    """
+    Get a reward photo based on name.
+
+    params:
+        name -> name of the picture, including the extension (.png, .jpg)
+
+    returns:
+        picture, as a file
+
+    excepts:
+        401 - invalid token
+        404 - picture not found
+        400 - file name not valid
+        422 - name argument missing
+    """
+    name = request.args.get('name', type=str, )
+
+    logger.debug(f"user requested profile picture : {name}")
+
+    if name is not None:
+        # regex testing if user is trying to access other parts of the OS (with..)
+        if match(r'^[\w\s_+\-()]([\w\s_+\-().])+$', name) is None:
+            return {"error": "Invalid profile picture!", }, 400
+
+        file_path = os.path.join(
+            'public',
+            'rewards',
+            name,
+        )
+
+        if path.isfile(file_path):
+            return await send_file(file_path, mimetype='image/gif')
+        else:
+            return {"error": "Picture not found", }, 404
+
+    return {"error": "Insufficient information!", }, 422
 
 # ###### WEB SERVER START ######
 
