@@ -3,6 +3,8 @@ from typing import Any, Dict
 import simplejson as json
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .database.reward_types import RewardTypes
+from .database.rewards_log import RewardsLog
 from .database.administrators import Administrators
 from .database.employees import Employees
 from .database.images import Images
@@ -10,6 +12,8 @@ from .database.places import Places
 from .database.stamps import Stamps
 from .database.users import Users
 from .utils.all_sites_filter import AllSitesFilter
+from .config.logger_config import logger
+from .id_token import get_id_from_token, InvalidIdToken
 
 
 async def get_tourist_sites(session: AsyncSession, site_type: AllSitesFilter, visitor_id: int):
@@ -130,6 +134,10 @@ async def get_self_info(session: AsyncSession, user_id: int):
     user['stamps'] = await Stamps.all(session, user_id)
     user['employee_info'] = await Employees.by_id(session, user_id)
     user['is_admin'] = bool(await Administrators.exists(session, user_id))
+    user['given_rewards'] = await RewardsLog.all_by_visitor_id(session, user_id)
+    user['eligible_rewards'] = await RewardTypes.eligable(session,
+                                                          len(user['stamps']),
+                                                          [reward_id['id'] for reward_id in user['given_rewards']])
 
     return user
 
@@ -169,3 +177,8 @@ async def get_employee_info(session: AsyncSession, employee_id: int):
     employee_info['is_admin'] = await Administrators.exists(session, employee_id)
 
     return employee_info
+
+
+async def get_user_eligble_rewards(session: AsyncSession, id_token: str):
+
+    id = await get_id_from_token(id_token)
