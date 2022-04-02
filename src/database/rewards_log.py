@@ -22,8 +22,8 @@ class RewardsLog(object):
                             select(
                                 RewardsLogModel.employee_id,
                                 RewardsLogModel.visitor_id,
-                                RewardsLogModel.reward_id,
                                 RewardsLogModel.given_on,
+                                RewardTypesModel.id,
                                 RewardTypesModel.name,
                                 RewardTypesModel.description,
                                 RewardTypesModel.minimum_stamps,
