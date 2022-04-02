@@ -28,7 +28,7 @@ def generate_id_token(user_id: int) -> str:
     ).hex()
 
 
-def get_id_from_token(token: str):
+def get_id_from_token(token: str) -> int:
     try:
         token: List[str] = __dec_box.decrypt(bytes.fromhex(token)) \
             .decode('utf-8').split('\n')
@@ -40,9 +40,12 @@ def get_id_from_token(token: str):
             # Check if we have the 2 fields, if token hasn't expired, make a stamp
             if datetime.utcnow() < datetime.fromisoformat(token[1]):
                 logger.debug("token is valid, return id...")
+                return int(token[0])
             else:
                 logger.debug("token expired, raise exception")
+                raise InvalidIdToken()
 
     except (ValueError, TypeError, CryptoError) as ex:
         logger.debug(ex)
         logger.debug("Decrypting error...")
+        raise InvalidIdToken()
