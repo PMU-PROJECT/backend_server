@@ -467,6 +467,17 @@ async def user_info():
         return ({"error": "User doesn't exist!", }, 404) if user is None else (user, 200)
 
 
+# rewards endpoints
+
+@application.route('/api/get_eligible_rewards', methods=['GET'], )
+async def eligible_rewards():
+    return '', 200
+
+
+@application.route('/api/post_reward', methods=['POST'], )
+async def post_reward():
+    return '', 200
+
 # ###### IMAGE SERVER HANDLERS ######
 
 
