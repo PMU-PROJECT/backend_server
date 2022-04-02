@@ -30,7 +30,7 @@ class RewardTypes(object):
             raise DatabaseError(ex)
 
     @staticmethod
-    async def eligable(session: AsyncSession, stamp_count: int, reward_id_blocklist: list) -> List[Dict[str, Any]]:
+    async def eligible(session: AsyncSession, stamp_count: int, reward_id_blocklist: list) -> List[Dict[str, Any]]:
         try:
             return list(
                 map(
