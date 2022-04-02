@@ -435,3 +435,18 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   - 400 - file name not valid
   - 422 - name argument missing
   
+- `/imageserver/rewards` [GET]
+
+  the request requires header:
+  `Authorization` : valid Auth token
+
+  the request requires the param as argument:
+  `name` : picture name **with** extension (.jpg, .png)
+
+  if name and Auth token valid, returns photo of reward
+
+  Excepts:
+  - 401 - invalid token
+  - 404 - picture not found
+  - 400 - file name not valid
+  - 422 - name argument missing
