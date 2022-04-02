@@ -43,8 +43,9 @@ class RewardTypes(object):
                                 RewardTypesModel.minimum_stamps,
                                 RewardTypesModel.picture,
                             ).where(
-                                and_(RewardTypesModel.minimum_stamps <= stamp_count,
-                                     RewardTypesModel.id not in reward_id_blocklist)
+                                RewardTypesModel.id.notin_(
+                                    reward_id_blocklist),
+                                RewardTypesModel.minimum_stamps <= stamp_count
                             ),
                         )
                     ).all(),
