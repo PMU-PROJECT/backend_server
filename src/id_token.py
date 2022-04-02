@@ -43,9 +43,9 @@ def get_id_from_token(token: str) -> int:
                 return int(token[0])
             else:
                 logger.debug("token expired, raise exception")
-                raise InvalidIdToken()
+                raise InvalidIdToken("ID Token expired!")
 
     except (ValueError, TypeError, CryptoError) as ex:
         logger.debug(ex)
         logger.debug("Decrypting error...")
-        raise InvalidIdToken()
+        raise InvalidIdToken("Couldn't decrypt token!")

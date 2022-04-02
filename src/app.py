@@ -9,8 +9,10 @@ from typing import List, Any, Dict, Optional, Tuple
 from quart import Quart, request, send_file, g
 from quart_cors import cors
 
+from src.database.rewards_log import RewardsLog
+
 # Own imports
-from .exceptions import RaisedFrom, ServerException
+from .exceptions import BadUserRequest, RaisedFrom, ServerException
 from .response_formatters import get_employee_info, get_site_by_id, get_tourist_sites, get_self_info, get_user_info, get_user_eligible_rewards
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
@@ -20,7 +22,7 @@ from .database.stamps import Stamps
 from .database.employees import Employees
 from .google_api import google_api
 from .stamps import InvalidStamp, make_stamp, Stamp
-from .id_token import generate_id_token, InvalidIdToken
+from .id_token import generate_id_token, InvalidIdToken, get_id_from_token
 from .utils.all_sites_filter import AllSitesFilter
 from .utils.enviromental_variables import PORT
 
@@ -478,6 +480,16 @@ async def eligible_rewards():
 
     params:
         id_token : str -> user id token from get_id_token endpoint
+
+    returns:
+        {received_rewards: list(dict),
+         eligible_rewards: list(dict)}
+
+    excepts:
+        401: Employee not authorized
+        401: user is not employee
+        422: wrong body type / insufficient information
+        400: Expired/invalid ID token
     """
     async with async_session.begin() as session:
 
@@ -491,14 +503,40 @@ async def eligible_rewards():
         try:
             rewards = await get_user_eligible_rewards(session, id_token)
         except(InvalidIdToken):
-            return {"error": "Invalid ID token"}, 400
+            return {"error": "Expired/Invalid ID token"}, 400
 
         return rewards, 200
 
 
 @application.route('/api/post_reward', methods=['POST'], )
 async def post_reward():
-    return '', 200
+    async with async_session.begin() as session:
+
+        employee = await Employees.by_id(session, g.authenticated_user)
+
+        if employee is None:
+            return {"error": "You are not authorized for this command!"}, 401
+
+        if not employee.get("can_reward"):
+            return {"error": "You can't give out rewards! Please contact an admin!"}, 401
+
+        form = await request.form
+
+        id_token = form.get('id_token', type=str)
+        reward_id = form.get('reward_id', type=int)
+        logger.debug(f"id_token : {id_token}, reward_id : {reward_id}")
+        if None in (reward_id, id_token):
+            return {"error": "Insufficient information!", "expected": "id_token and reward_id as form-data"}, 422
+
+        try:
+            if await RewardsLog.insert(session, get_id_from_token(id_token), reward_id, g.authenticated_user):
+                return {"message": "Reward given!"}, 200
+            return {"error": "User already recieved this reward!"}, 400
+        except BadUserRequest:
+            return {"error": "User isn't eligible or reward doesn't exist!"}, 400
+        except InvalidIdToken:
+            return {"error": "Expired or invalid ID token"}, 400
+
 
 # ###### IMAGE SERVER HANDLERS ######
 
