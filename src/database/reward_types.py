@@ -17,7 +17,32 @@ class RewardTypes(object):
                     lambda result: result._asdict(), (
                         await session.execute(
                             select(
-                                [RewardTypesModel, ],
+                                RewardTypesModel.id,
+                                RewardTypesModel.name,
+                                RewardTypesModel.description,
+                                RewardTypesModel.minimum_stamps,
+                            ),
+                        )
+                    ).all(),
+                ),
+            )
+        except Exception as ex:
+            raise DatabaseError(ex)
+
+    @staticmethod
+    async def eligable(session: AsyncSession, stamp_count: int) -> List[Dict[str, Any]]:
+        try:
+            return list(
+                map(
+                    lambda result: result._asdict(), (
+                        await session.execute(
+                            select(
+                                RewardTypesModel.id,
+                                RewardTypesModel.name,
+                                RewardTypesModel.description,
+                                RewardTypesModel.minimum_stamps,
+                            ).where(
+                                RewardTypesModel.minimum_stamps <= stamp_count
                             ),
                         )
                     ).all(),
