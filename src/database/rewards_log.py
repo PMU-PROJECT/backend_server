@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import select, insert
 
 from .model.rewards_log import RewardsLog as RewardsLogModel
+from .model.reward_types import RewardTypes as RewardTypesModel
 from .reward_types import RewardTypes
 from .stamps import Stamps
 from ..exceptions import BadUserRequest, DatabaseError
@@ -23,8 +24,15 @@ class RewardsLog(object):
                                 RewardsLogModel.visitor_id,
                                 RewardsLogModel.reward_id,
                                 RewardsLogModel.given_on,
+                                RewardTypesModel.name,
+                                RewardTypesModel.description,
+                                RewardTypesModel.minimum_stamps,
+                                RewardTypesModel.picture,
                             ).where(
                                 RewardsLogModel.visitor_id == visitor_id,
+                            ).join(
+                                RewardTypesModel,
+                                RewardsLogModel.reward_id == RewardTypesModel.id,
                             ),
                         )
                     ).all(),
