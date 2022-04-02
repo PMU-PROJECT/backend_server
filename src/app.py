@@ -510,6 +510,18 @@ async def eligible_rewards():
 
 @application.route('/api/post_reward', methods=['POST'], )
 async def post_reward():
+    """
+    Endpoint for registering a reward in the db
+
+    excepts:
+        401: user not authorized
+        401: user not employee
+        401: employee can't give rewards
+        422: Insufficient information or wrong body type
+        400: user already has this reward
+        400: user isn't eligible to recieve the reward or reward doesn't exist
+        400: expired or invalid ID token
+    """
     async with async_session.begin() as session:
 
         employee = await Employees.by_id(session, g.authenticated_user)
