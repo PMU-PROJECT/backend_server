@@ -11,7 +11,7 @@ from quart_cors import cors
 
 # Own imports
 from .exceptions import RaisedFrom, ServerException
-from .response_formatters import get_employee_info, get_site_by_id, get_tourist_sites, get_self_info, get_user_info, get_user_eligble_rewards
+from .response_formatters import get_employee_info, get_site_by_id, get_tourist_sites, get_self_info, get_user_info, get_user_eligible_rewards
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
 from .database import db_init, async_session
@@ -481,7 +481,7 @@ async def eligible_rewards():
     """
     async with async_session.begin() as session:
 
-        if not Employees.exists(session, g.authenticated_user):
+        if not await Employees.exists(session, g.authenticated_user):
             return {"error": "You are not authorized for this command!"}, 401
 
         id_token = request.args.get('id_token', type=str)
@@ -489,9 +489,9 @@ async def eligible_rewards():
             return {"error": "Insufficient information!", "expected": "id_token as an argument"}, 422
 
         try:
-            rewards = get_user_eligble_rewards(session, id_token)
-        except:
-            return {"error": "ID token not valid!"}, 400
+            rewards = await get_user_eligible_rewards(session, id_token)
+        except(InvalidIdToken):
+            return {"error": "Invalid ID token"}, 400
 
         return rewards, 200
 

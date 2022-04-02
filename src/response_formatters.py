@@ -135,7 +135,7 @@ async def get_self_info(session: AsyncSession, user_id: int):
     user['employee_info'] = await Employees.by_id(session, user_id)
     user['is_admin'] = bool(await Administrators.exists(session, user_id))
     user['given_rewards'] = await RewardsLog.all_by_visitor_id(session, user_id)
-    user['eligible_rewards'] = await RewardTypes.eligable(session,
+    user['eligible_rewards'] = await RewardTypes.eligible(session,
                                                           len(user['stamps']),
                                                           [reward_id['id'] for reward_id in user['given_rewards']])
 
@@ -179,6 +179,16 @@ async def get_employee_info(session: AsyncSession, employee_id: int):
     return employee_info
 
 
-async def get_user_eligble_rewards(session: AsyncSession, id_token: str):
-
-    id = await get_id_from_token(id_token)
+async def get_user_eligible_rewards(session: AsyncSession, id_token: str):
+    id = get_id_from_token(id_token)
+    logger.debug(f"ID: {id}")
+    stamps = await Stamps.all(session, id)
+    logger.debug(f"Stamps count : {len(stamps)}")
+    received_rewards = await RewardsLog.all_by_visitor_id(session, id)
+    logger.debug(f"Received num of rewards : {len(received_rewards)}")
+    return {
+        "received": received_rewards,
+        "eligible": await RewardTypes.eligible(session,
+                                               len(stamps),
+                                               [reward_id['id'] for reward_id in received_rewards])
+    }
