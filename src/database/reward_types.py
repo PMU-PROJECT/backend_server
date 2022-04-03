@@ -2,9 +2,12 @@ from typing import Any, Dict, List
 
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.expression import select, and_
+from sqlalchemy.sql.expression import select
+from sqlalchemy.sql.functions import count
 
 from .model.reward_types import RewardTypes as RewardTypesModel
+from .model.rewards_log import RewardsLog as RewardsLogModel
+from .model.stamps import Stamps as StampsModel
 from ..exceptions import BadUserRequest, DatabaseError
 
 
@@ -30,22 +33,27 @@ class RewardTypes(object):
             raise DatabaseError(ex)
 
     @staticmethod
-    async def eligible(session: AsyncSession, stamp_count: int, reward_id_blocklist: list) -> List[Dict[str, Any]]:
+    async def eligible(session: AsyncSession, visitor_id: int) -> List[Dict[str, Any]]:
         try:
             return list(
                 map(
                     lambda result: result._asdict(), (
                         await session.execute(
                             select(
-                                RewardTypesModel.id,
-                                RewardTypesModel.name,
-                                RewardTypesModel.description,
-                                RewardTypesModel.minimum_stamps,
-                                RewardTypesModel.picture,
+                                [RewardTypesModel, ],
                             ).where(
                                 RewardTypesModel.id.notin_(
-                                    reward_id_blocklist),
-                                RewardTypesModel.minimum_stamps <= stamp_count
+                                    select(
+                                        [RewardsLogModel.reward_id, ],
+                                    ).where(
+                                        RewardsLogModel.visitor_id == visitor_id,
+                                    ).subquery(),
+                                ),
+                                RewardTypesModel.minimum_stamps <= select(
+                                    [count(), ],
+                                ).where(
+                                    StampsModel.visitor_id == visitor_id,
+                                ).scalar_subquery(),
                             ),
                         )
                     ).all(),

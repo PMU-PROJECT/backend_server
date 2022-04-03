@@ -128,16 +128,29 @@ async def get_self_info(session: AsyncSession, user_id: int):
     if user is None:
         return None
 
-    user = dict(user)
-
     # Needed requests
-    user['stamps'] = await Stamps.all(session, user_id)
-    user['employee_info'] = await Employees.by_id(session, user_id)
-    user['is_admin'] = bool(await Administrators.exists(session, user_id))
-    user['given_rewards'] = await RewardsLog.all_by_visitor_id(session, user_id)
-    user['eligible_rewards'] = await RewardTypes.eligible(session,
-                                                          len(user['stamps']),
-                                                          [reward.get('reward_id') for reward in user['given_rewards']])
+    user.update(
+        stamps=await Stamps.all(
+            session,
+            user_id,
+        ),
+        employee_info=await Employees.by_id(
+            session,
+            user_id,
+        ),
+        is_admin=await Administrators.exists(
+            session,
+            user_id,
+        ),
+        given_rewards=await RewardsLog.all_by_visitor_id(
+            session,
+            user_id,
+        ),
+        eligible_rewards=await RewardTypes.eligible(
+            session,
+            user_id,
+        ),
+    )
 
     return user
 
@@ -188,7 +201,8 @@ async def get_user_eligible_rewards(session: AsyncSession, id_token: str):
     logger.debug(f"Received num of rewards : {len(received_rewards)}")
     return {
         "received_rewards": received_rewards,
-        "eligible_rewards": await RewardTypes.eligible(session,
-                                                       len(stamps),
-                                                       [reward.get('reward_id') for reward in received_rewards])
+        "eligible_rewards": await RewardTypes.eligible(
+            session,
+            [reward.get('reward_id') for reward in received_rewards]
+        )
     }
