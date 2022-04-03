@@ -74,8 +74,8 @@ class Employees(object):
             raise DatabaseError(ex)
 
         return None if result is None else {
-            col.name: getattr(result, col.name)
-            for col in result.__table__.columns
+            col: getattr(result, col)
+            for col in result.keys()
         }
 
     @staticmethod

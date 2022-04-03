@@ -41,32 +41,24 @@ async def get_tourist_sites(session: AsyncSession, site_type: AllSitesFilter, vi
 
         # Skip all unvisited
         if site_type == AllSitesFilter.visited:
-            if site.get('id') not in stamp_places_id:
+            if site.get('place_id') not in stamp_places_id:
                 continue
 
         # Skip all visited
         if site_type == AllSitesFilter.unvisited:
-            if site.get('id') in stamp_places_id:
+            if site.get('place_id') in stamp_places_id:
                 continue
 
         # Fetch image id
-        image_id = (
-            await Images.all_by_place(
-                session, site.get('id'),
-            )
-        )
-
-        # Get first element of array only after we know we have an image
-        if image_id is not None:
-            image_id = image_id[0]
+        image_id = await Images.first_by_place(session, site.get('place_id'))
 
         current_site = {
-            'id': site['id'],
+            'id': site['place_id'],
             'image': image_id,
             'region': site['region_name'],
             'city': site['city_name'],
             'name': site['name'],
-            'is_stamped': bool(site.get('id') in stamp_places_id)
+            'is_stamped': bool(site.get('place_id') in stamp_places_id)
         }
 
         # get only 1 image for visualisation of the card
@@ -94,11 +86,11 @@ async def get_site_by_id(session: AsyncSession, site_id: int):
         # lists
         'images': await Images.all_by_place(
             session,
-            site.get('id'),
+            site.get('place_id'),
         ),
         'employees': await Employees.all_by_place(
             session,
-            site.get('id'),
+            site.get('place_id'),
         ),
         # Make latitude and longitude JSON serializable
         'latitude': json.dumps(
