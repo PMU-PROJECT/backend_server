@@ -45,7 +45,7 @@ class RewardTypes(object):
                             select(
                                 [RewardTypesModel, ],
                             ).where(
-                                RewardTypesModel.id.notin_(
+                                RewardTypesModel.reward_id.notin_(
                                     select(
                                         [RewardsLogModel.reward_id, ],
                                     ).where(
@@ -73,7 +73,7 @@ class RewardTypes(object):
                     select(
                         [RewardTypesModel.minimum_stamps, ],
                     ).where(
-                        RewardTypesModel.id == reward_id,
+                        RewardTypesModel.reward_id == reward_id,
                     ).limit(
                         1,
                     ),

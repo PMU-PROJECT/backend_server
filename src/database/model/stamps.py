@@ -11,7 +11,7 @@ from .users import Users
 class Stamps(ORMBase):
     visitor_id = id_ref_column(
         'visitor_id',
-        Users.id,
+        Users.user_id,
         options={
             'primary_key': True,
         },
@@ -19,13 +19,13 @@ class Stamps(ORMBase):
 
     place_id = id_ref_column(
         'place_id',
-        Places.id,
+        Places.place_id,
         options={
             'primary_key': True,
         },
     )
 
-    employee_id = id_ref_column('employee_id', Employees.id, )
+    employee_id = id_ref_column('employee_id', Employees.user_id, )
 
     given_on = Column(
         'given_on',

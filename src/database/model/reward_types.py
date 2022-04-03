@@ -6,7 +6,7 @@ from . import ORMBase, id_column
 
 
 class RewardTypes(ORMBase):
-    id = id_column('reward_id', )
+    reward_id = id_column('reward_id', )
 
     name = Column('name', Unicode(127, ), )
 

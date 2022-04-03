@@ -8,10 +8,10 @@ from .users import Users
 
 
 class Employees(ORMBase):
-    id = id_ref_column('user_id', Users.id, options={'primary_key': True, }, )
+    user_id = id_ref_column('user_id', Users.user_id, options={'primary_key': True, }, )
 
-    place_id = id_ref_column('place_id', Places.id, )
+    place_id = id_ref_column('place_id', Places.place_id, )
 
-    added_by = id_ref_column('added_by', Administrators.id, )
+    added_by = id_ref_column('added_by', Administrators.user_id, )
 
     can_reward = Column('can_reward', Boolean(create_constraint=True, ), )

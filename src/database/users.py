@@ -43,7 +43,7 @@ class Users(object):
                             UsersModel.profile_picture,
                         ],
                     ).where(
-                        UsersModel.id == user_id,
+                        UsersModel.user_id == user_id,
                     ),
                 )
             ).first()
@@ -73,7 +73,7 @@ class Users(object):
                         last_name=last_name,
                         email=email,
                     ).returning(
-                        UsersModel.id,
+                        UsersModel.user_id,
                     ),
                 )
             ).scalar()

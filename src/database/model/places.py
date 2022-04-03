@@ -8,9 +8,9 @@ from .cities import Cities
 
 class Places(ORMBase):
 
-    city_id = id_ref_column('city_id', Cities.id, )
+    city_id = id_ref_column('city_id', Cities.city_id, )
 
-    id = id_column('place_id', )
+    place_id = id_column('place_id', )
 
     name = Column('name', Unicode(255, ), )
 

@@ -23,12 +23,12 @@ class LocalUsers:
                             ).label(
                                 'record',
                             ),
-                            UsersModel.id,
+                            UsersModel.user_id,
                             LocalUsersModel.pw_hash,
                         ],
                     ).join(
                         UsersModel,
-                        LocalUsersModel.id == UsersModel.id,
+                        LocalUsersModel.user_id == UsersModel.user_id,
                     ).where(
                         UsersModel.email == email,
                     ).union(

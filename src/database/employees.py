@@ -33,7 +33,7 @@ class Employees(object):
                         select(
                             [EmployeesModel, ],
                         ).where(
-                            EmployeesModel.id == user_id,
+                            EmployeesModel.user_id == user_id,
                         ).exists(),
                     )
                 )
@@ -57,7 +57,7 @@ class Employees(object):
             EmployeesModel,
         ).join(
             UsersModel,
-            EmployeesModel.id == UsersModel.id,
+            EmployeesModel.user_id == UsersModel.user_id,
         )
 
     @staticmethod
@@ -66,7 +66,7 @@ class Employees(object):
             result: Union[None, Row] = (
                 await session.execute(
                     Employees.__query().where(
-                        EmployeesModel.id == employee_id,
+                        EmployeesModel.user_id == employee_id,
                     ),
                 )
             ).first()

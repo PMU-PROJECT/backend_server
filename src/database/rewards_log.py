@@ -27,7 +27,7 @@ class RewardsLog(object):
                                     RewardsLogModel.employee_id,
                                     RewardsLogModel.visitor_id,
                                     RewardsLogModel.given_on,
-                                    RewardTypesModel.id,
+                                    RewardTypesModel.reward_id,
                                     RewardTypesModel.name,
                                     RewardTypesModel.description,
                                     RewardTypesModel.minimum_stamps,
@@ -37,7 +37,7 @@ class RewardsLog(object):
                                 RewardsLogModel.visitor_id == visitor_id,
                             ).join(
                                 RewardTypesModel,
-                                RewardsLogModel.reward_id == RewardTypesModel.id,
+                                RewardsLogModel.reward_id == RewardTypesModel.reward_id,
                             ),
                         )
                     ).all(),

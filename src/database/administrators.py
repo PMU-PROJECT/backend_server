@@ -17,7 +17,7 @@ class Administrators(object):
                         select(
                             [AdministratorsModel, ],
                         ).where(
-                            AdministratorsModel.id == user_id,
+                            AdministratorsModel.user_id == user_id,
                         ).exists(),
                     )
                 )

@@ -14,20 +14,20 @@ class Places(object):
     @staticmethod
     def __query() -> Select:
         return select(
-            [RegionsModel.name.label('region_name'), CitiesModel.name.label('city_name'), PlacesModel.id,
+            [RegionsModel.name.label('region_name'), CitiesModel.name.label('city_name'), PlacesModel.place_id,
                 PlacesModel.name.label('name'), PlacesModel.description, PlacesModel.latitude, PlacesModel.longitude, ],
         ).select_from(
             PlacesModel,
         ).join(
-            CitiesModel, PlacesModel.city_id == CitiesModel.id, ).join(
-            RegionsModel, CitiesModel.region_id == RegionsModel.id, )
+            CitiesModel, PlacesModel.city_id == CitiesModel.city_id, ).join(
+            RegionsModel, CitiesModel.region_id == RegionsModel.region_id, )
 
     @staticmethod
     async def by_id(session: AsyncSession, place_id: int) -> Optional[Dict[str, Any]]:
         try:
             result: Union[None, Row] = (await session.execute(
                 Places.__query().where(
-                    PlacesModel.id == place_id, ), )).first()
+                    PlacesModel.place_id == place_id, ), )).first()
         except Exception as ex:
             raise DatabaseError(ex)
 
