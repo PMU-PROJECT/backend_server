@@ -33,7 +33,7 @@ class Employees(object):
                         select(
                             [EmployeesModel, ],
                         ).where(
-                            EmployeesModel.id == user_id,
+                            EmployeesModel.user_id == user_id,
                         ).exists(),
                     )
                 )
@@ -53,10 +53,11 @@ class Employees(object):
                 EmployeesModel.can_reward,
                 EmployeesModel.place_id
             ],
-            from_obj=EmployeesModel,
+        ).select_from(
+            EmployeesModel,
         ).join(
             UsersModel,
-            EmployeesModel.id == UsersModel.id,
+            EmployeesModel.user_id == UsersModel.user_id,
         )
 
     @staticmethod
@@ -65,21 +66,27 @@ class Employees(object):
             result: Union[None, Row] = (
                 await session.execute(
                     Employees.__query().where(
-                        EmployeesModel.id == employee_id,
+                        EmployeesModel.user_id == employee_id,
                     ),
                 )
             ).first()
         except Exception as ex:
             raise DatabaseError(ex)
 
-        return None if result is None else result._asdict()
+        return None if result is None else {
+            col: getattr(result, col)
+            for col in result.keys()
+        }
 
     @staticmethod
     async def all_by_place(session: AsyncSession, place_id: int) -> List[Dict[str, Any]]:
         try:
             return list(
                 map(
-                    lambda result: result._asdict(),
+                    lambda result: {
+                        col: getattr(result, col)
+                        for col in result.keys()
+                    },
                     await (
                         await session.stream(
                             Employees.__query().where(

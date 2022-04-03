@@ -187,7 +187,7 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
     ```
     {
     "email": str,
-    "employee_info": {
+    "employee_info": { # Only if user is employee, else null
         "added_by": int,
         "can_reward": bool,
         "email": str,
@@ -206,6 +206,27 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
         "given_on": str,
         "place_id": int,
         "visitor_id": int
+      }, ...
+    ],
+    "given_rewards": [
+      {
+        "description": str,
+        "employee_id": int,
+        "given_on": str,
+        "minimum_stamps": int,
+        "name": str,
+        "picture": str,
+        "id": int,
+        "visitor_id": int
+      }, ...
+    ],
+    "eligible_rewards":[
+      {
+        "description": str,
+        "id": int,
+        "minimum_stamps": int,
+        "name": str,
+        "picture": str
       }, ...
     ]
   }
@@ -303,9 +324,84 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
 
   Excepts:
   - 401: not authorized
-  - 400: expired/invalid token
+  - 400: expired/invalid ID token
   - 400: employee trying to give himself a stamp
 
+
+- `/api/get_eligible_rewards` [GET]
+
+  Request for EMPLOYEES to see what rewards they can give to a user,
+  as well as what rewards the user already has
+
+  the request requires header:
+  `Authorization` : valid auth token
+
+  the request requires argument:
+  `id_token` : str
+
+  if the user is employee, authorized and token is valid:
+  ```
+  {
+    "given_rewards": [
+      {
+        "description": str,
+        "employee_id": int,
+        "given_on": str,
+        "minimum_stamps": int,
+        "name": str,
+        "picture": str,
+        "id": int,
+        "visitor_id": int
+      }, ...
+    ],
+    "received_rewards": [
+        {
+          "description": str,
+          "employee_id": int,
+          "given_on": str,
+          "minimum_stamps": int,
+          "name": str,
+          "picture": str,
+          "reward_id": int,
+          "visitor_id": int
+        }
+    ]
+  }
+  ```
+
+  Excepts:
+    - 401 - Employee not authorized
+    - 401 - user is not employee
+    - 422 - wrong body type / insufficient information
+    - 400 - Expired/invalid ID token
+
+  
+- `/api/post_reward` [POST]
+  Endpoint for employees to mark that they've given a reward to a user
+  Employee must be able to give rewards! (can_reward column = true)
+
+  the request requires header:
+    `Authorization` : valid auth token
+
+  the request requires arguments as form-data:
+    `id_token` : str
+    `reward_id`: int
+
+  if the user is employee, authorized, can reward and id_token is valid:
+  ```
+  {
+    "reward" : str
+  }
+  ```
+
+  Excepts:
+    - 401 - user not authorized
+    - 401 - user not employee
+    - 401 - employee can't give rewards
+    - 422 - Insufficient information or wrong body type
+    - 400 - user already has this reward
+    - 400 - user isn't eligible to recieve the reward or reward doesn't exist
+    - 400 - expired or invalid ID token
 
 - `/imageserver/tourist_sites` [GET]
 
@@ -339,3 +435,18 @@ You can register/login in the app using our internal protocol, or OAuth2 and goo
   - 400 - file name not valid
   - 422 - name argument missing
   
+- `/imageserver/rewards` [GET]
+
+  the request requires header:
+  `Authorization` : valid Auth token
+
+  the request requires the param as argument:
+  `name` : picture name **with** extension (.jpg, .png)
+
+  if name and Auth token valid, returns photo of reward
+
+  Excepts:
+  - 401 - invalid token
+  - 404 - picture not found
+  - 400 - file name not valid
+  - 422 - name argument missing

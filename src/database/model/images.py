@@ -6,8 +6,8 @@ from .places import Places
 
 
 class Images(ORMBase):
-    place_id = id_ref_column('place_id', Places.id, )
+    place_id = id_ref_column('place_id', Places.place_id, )
 
-    id = id_column('image_id', )
+    image_id = id_column('image_id', )
 
     filename = Column('filename', String(127), )

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import insert, select, literal
@@ -31,7 +31,7 @@ class Users(object):
             raise DatabaseError(ex)
 
     @staticmethod
-    async def by_id(session: AsyncSession, user_id: int) -> Union[None, Dict[str, Any]]:
+    async def by_id(session: AsyncSession, user_id: int) -> Optional[Dict[str, Any]]:
         try:
             result: Union[None, Row] = (
                 await session.execute(
@@ -43,14 +43,17 @@ class Users(object):
                             UsersModel.profile_picture,
                         ],
                     ).where(
-                        UsersModel.id == user_id,
+                        UsersModel.user_id == user_id,
                     ),
                 )
             ).first()
         except Exception as ex:
             raise DatabaseError(ex)
 
-        return None if result is None else result._asdict()
+        return None if result is None else {
+            col: getattr(result, col)
+            for col in result.keys()
+        }
 
     @staticmethod
     async def insert(session: AsyncSession, first_name: str, last_name: str, email: str) -> int:
@@ -70,7 +73,7 @@ class Users(object):
                         last_name=last_name,
                         email=email,
                     ).returning(
-                        UsersModel.id,
+                        UsersModel.user_id,
                     ),
                 )
             ).scalar()

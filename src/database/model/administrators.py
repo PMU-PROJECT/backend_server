@@ -3,4 +3,4 @@ from .users import Users
 
 
 class Administrators(ORMBase):
-    id = id_ref_column('user_id', Users.id, options={'primary_key': True, }, )
+    user_id = id_ref_column('user_id', Users.user_id, options={'primary_key': True, }, )

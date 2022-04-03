@@ -3,6 +3,8 @@ from typing import Any, Dict
 import simplejson as json
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .database.reward_types import RewardTypes
+from .database.rewards_log import RewardsLog
 from .database.administrators import Administrators
 from .database.employees import Employees
 from .database.images import Images
@@ -10,6 +12,8 @@ from .database.places import Places
 from .database.stamps import Stamps
 from .database.users import Users
 from .utils.all_sites_filter import AllSitesFilter
+from .config.logger_config import logger
+from .id_token import get_id_from_token
 
 
 async def get_tourist_sites(session: AsyncSession, site_type: AllSitesFilter, visitor_id: int):
@@ -37,32 +41,24 @@ async def get_tourist_sites(session: AsyncSession, site_type: AllSitesFilter, vi
 
         # Skip all unvisited
         if site_type == AllSitesFilter.visited:
-            if site.get('id') not in stamp_places_id:
+            if site.get('place_id') not in stamp_places_id:
                 continue
 
         # Skip all visited
         if site_type == AllSitesFilter.unvisited:
-            if site.get('id') in stamp_places_id:
+            if site.get('place_id') in stamp_places_id:
                 continue
 
         # Fetch image id
-        image_id = (
-            await Images.all_by_place(
-                session, site.get('id'),
-            )
-        )
-
-        # Get first element of array only after we know we have an image
-        if image_id is not None:
-            image_id = image_id[0]
+        image_id = await Images.first_by_place(session, site.get('place_id'))
 
         current_site = {
-            'id': site['id'],
+            'id': site['place_id'],
             'image': image_id,
             'region': site['region_name'],
             'city': site['city_name'],
             'name': site['name'],
-            'is_stamped': bool(site.get('id') in stamp_places_id)
+            'is_stamped': bool(site.get('place_id') in stamp_places_id)
         }
 
         # get only 1 image for visualisation of the card
@@ -90,11 +86,11 @@ async def get_site_by_id(session: AsyncSession, site_id: int):
         # lists
         'images': await Images.all_by_place(
             session,
-            site.get('id'),
+            site.get('place_id'),
         ),
         'employees': await Employees.all_by_place(
             session,
-            site.get('id'),
+            site.get('place_id'),
         ),
         # Make latitude and longitude JSON serializable
         'latitude': json.dumps(
@@ -124,12 +120,29 @@ async def get_self_info(session: AsyncSession, user_id: int):
     if user is None:
         return None
 
-    user = dict(user)
-
     # Needed requests
-    user['stamps'] = await Stamps.all(session, user_id)
-    user['employee_info'] = await Employees.by_id(session, user_id)
-    user['is_admin'] = bool(await Administrators.exists(session, user_id))
+    user.update(
+        stamps=await Stamps.all(
+            session,
+            user_id,
+        ),
+        employee_info=await Employees.by_id(
+            session,
+            user_id,
+        ),
+        is_admin=await Administrators.exists(
+            session,
+            user_id,
+        ),
+        given_rewards=await RewardsLog.all_by_visitor_id(
+            session,
+            user_id,
+        ),
+        eligible_rewards=await RewardTypes.eligible(
+            session,
+            user_id,
+        ),
+    )
 
     return user
 
@@ -169,3 +182,22 @@ async def get_employee_info(session: AsyncSession, employee_id: int):
     employee_info['is_admin'] = await Administrators.exists(session, employee_id)
 
     return employee_info
+
+
+async def get_user_eligible_rewards(session: AsyncSession, id_token: str):
+    visitor_id = get_id_from_token(id_token)
+    logger.debug(f"ID: {visitor_id}")
+
+    stamps = await Stamps.all(session, visitor_id)
+    logger.debug(f"Stamps count : {len(stamps)}")
+
+    received_rewards = await RewardsLog.all_by_visitor_id(session, visitor_id)
+    logger.debug(f"Received num of rewards : {len(received_rewards)}")
+
+    return {
+        "received_rewards": received_rewards,
+        "eligible_rewards": await RewardTypes.eligible(
+            session,
+            visitor_id,
+        )
+    }

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config.logger_config import logger
 from .database.employees import Employees
+from .id_token import get_id_from_token, InvalidIdToken
 
 __secret_key: PrivateKey = PrivateKey(random_bytes())
 __public_key: PublicKey = __secret_key.public_key
@@ -28,15 +29,8 @@ class Stamp:
         self.employee_id: int = employee_id
 
 
-class InvalidStampToken(Exception):
+class InvalidStamp(Exception):
     pass
-
-
-def generate_stamp_token(user_id: int) -> str:
-    return __enc_box.encrypt(
-        f"{user_id}\n{(datetime.utcnow() + timedelta(seconds=30)).isoformat()}"
-        f"".encode('utf-8')
-    ).hex()
 
 
 async def make_stamp(session: AsyncSession, token: str, employee_id: int) -> Stamp:
@@ -49,31 +43,16 @@ async def make_stamp(session: AsyncSession, token: str, employee_id: int) -> Sta
     employee = await Employees.by_id(session, employee_id)
     if employee is None:
         logger.debug("Employee doesn't exist!")
-        raise InvalidStampToken()
+        raise InvalidStamp()
 
     place_id = employee.get("place_id")
     if place_id is None:
         logger.debug("Employee doesn't have an assigned place!")
-        raise InvalidStampToken()
+        raise InvalidStamp()
 
     try:
-        # Decrypt the data from the token
-        token: List[str] = __dec_box.decrypt(bytes.fromhex(token)) \
-            .decode('utf-8').split('\n')
-
-        if len(token) == 2:
-            logger.debug("Token decoded : {token}")
-            logger.debug(f"time now :  {datetime.utcnow()}")
-            logger.debug(f"token time: {datetime.fromisoformat(token[1])}")
-
-            # Check if we have the 2 fields, if token hasn't expired, make a stamp
-            if datetime.utcnow() < datetime.fromisoformat(token[1]):
-                logger.debug("Stamp is valid, return stamp...")
-                return Stamp(employee_id, place_id, int(token[0]))
-            else:
-                logger.debug("Stamp invalid, raise exception")
-                raise InvalidStampToken()
-    except (ValueError, TypeError, CryptoError) as ex:
+        visitor_id = get_id_from_token(token)
+        return Stamp(employee_id, place_id, visitor_id)
+    except (ValueError, TypeError, CryptoError, InvalidIdToken) as ex:
         logger.debug(ex)
-        logger.debug("Decrypting error...")
-        raise InvalidStampToken()
+        raise InvalidStamp()

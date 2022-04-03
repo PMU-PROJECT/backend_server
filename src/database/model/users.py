@@ -6,7 +6,7 @@ from . import ORMBase, id_column
 
 
 class Users(ORMBase):
-    id = id_column('user_id', )
+    user_id = id_column('user_id', )
 
     first_name = Column('first_name', Unicode(127, ), )
 

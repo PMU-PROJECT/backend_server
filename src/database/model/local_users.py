@@ -6,7 +6,7 @@ from .users import Users
 
 
 class LocalUsers(ORMBase):
-    id = id_ref_column('user_id', Users.id, options={'primary_key': True, }, )
+    user_id = id_ref_column('user_id', Users.user_id, options={'primary_key': True, }, )
 
     pw_hash = Column(
         'pw_hash',

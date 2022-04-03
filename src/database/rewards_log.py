@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.expression import select, insert
 
 from .model.rewards_log import RewardsLog as RewardsLogModel
+from .model.reward_types import RewardTypes as RewardTypesModel
 from .reward_types import RewardTypes
 from .stamps import Stamps
 from ..exceptions import BadUserRequest, DatabaseError
@@ -16,12 +17,27 @@ class RewardsLog(object):
         try:
             return list(
                 map(
-                    lambda result: result._asdict(), (
+                    lambda result: {
+                        col: getattr(result, col)
+                        for col in result.keys()
+                    }, (
                         await session.execute(
                             select(
-                                [RewardsLogModel, ],
+                                [
+                                    RewardsLogModel.employee_id,
+                                    RewardsLogModel.visitor_id,
+                                    RewardsLogModel.given_on,
+                                    RewardTypesModel.reward_id,
+                                    RewardTypesModel.name,
+                                    RewardTypesModel.description,
+                                    RewardTypesModel.minimum_stamps,
+                                    RewardTypesModel.picture,
+                                ],
                             ).where(
                                 RewardsLogModel.visitor_id == visitor_id,
+                            ).join(
+                                RewardTypesModel,
+                                RewardsLogModel.reward_id == RewardTypesModel.reward_id,
                             ),
                         )
                     ).all(),

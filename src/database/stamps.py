@@ -36,7 +36,10 @@ class Stamps(object):
     async def all(session: AsyncSession, visitor_id: int) -> List[Dict[str, Any]]:
         return list(
             map(
-                lambda result: result._asdict(),
+                lambda result: {
+                    col: getattr(result, col)
+                    for col in result.keys()
+                },
                 await (
                     await session.stream(
                         select(

@@ -9,16 +9,20 @@ from typing import List, Any, Dict, Optional, Tuple
 from quart import Quart, request, send_file, g
 from quart_cors import cors
 
+from src.database.rewards_log import RewardsLog
+
 # Own imports
-from .exceptions import RaisedFrom, ServerException
-from .response_formatters import get_employee_info, get_site_by_id, get_tourist_sites, get_self_info, get_user_info
+from .exceptions import BadUserRequest, RaisedFrom, ServerException
+from .response_formatters import get_employee_info, get_site_by_id, get_tourist_sites, get_self_info, get_user_info, get_user_eligible_rewards
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
 from .config.logger_config import logger
 from .database import db_init, async_session
 from .database.local_users import LocalUsers
 from .database.stamps import Stamps
+from .database.employees import Employees
 from .google_api import google_api
-from .stamps import InvalidStampToken, generate_stamp_token, make_stamp, Stamp
+from .stamps import InvalidStamp, make_stamp, Stamp
+from .id_token import generate_id_token, InvalidIdToken, get_id_from_token
 from .utils.all_sites_filter import AllSitesFilter
 from .utils.enviromental_variables import PORT
 
@@ -175,7 +179,7 @@ async def get_site_info():
 
     return (site, 200) if site is not None else ({"error": "Site not found", }, 404)
 
-# Stamping endpoints
+# Identification endpoint
 
 
 @application.route('/api/get_id_token', methods=['GET', ], )
@@ -185,7 +189,7 @@ async def id_token() -> Tuple[Dict[str, str], int]:
     Token has a 30sec validity.
 
     returns:
-        {"stamp_token" : str}
+        {"id_token" : str}
 
     excepts:
         401: Not logged in
@@ -197,10 +201,12 @@ async def id_token() -> Tuple[Dict[str, str], int]:
         f"user with id {g.authenticated_user} requested a ID token")
 
     return {
-        'id_token': generate_stamp_token(
+        'id_token': generate_id_token(
             g.authenticated_user,
         ),
     }, 200
+
+# Stamipng endpoint
 
 
 @application.route('/api/make_stamp', methods=['POST', ], )
@@ -223,14 +229,14 @@ async def receive_stamp() -> Tuple[Dict[str, str], int]:
     async with async_session.begin() as session:
 
         # Make a stamp object
-        stamp_token: str = (await request.form).get('id_token')
+        id_token: str = (await request.form).get('id_token')
         logger.debug(f"User (id:{g.authenticated_user}) requested a stamp")
 
         try:
             stamp: Stamp = await make_stamp(
-                session, stamp_token, g.authenticated_user)
+                session, id_token, g.authenticated_user)
             logger.debug("Stamp successfully made!")
-        except InvalidStampToken:
+        except (InvalidStamp):
             return {'error': "The stamp token has expired or isn't valid or user isn't employee!"}, 400
 
         if stamp.visitor_id == stamp.employee_id:
@@ -467,6 +473,85 @@ async def user_info():
         return ({"error": "User doesn't exist!", }, 404) if user is None else (user, 200)
 
 
+# rewards endpoints
+
+@application.route('/api/get_eligible_rewards', methods=['GET'], )
+async def eligible_rewards():
+    """
+    Request for employees to see what rewards they can give to a certain user
+
+    params:
+        id_token : str -> user id token from get_id_token endpoint
+
+    returns:
+        {received_rewards: list(dict),
+         eligible_rewards: list(dict)}
+
+    excepts:
+        401: Employee not authorized
+        401: user is not employee
+        422: wrong body type / insufficient information
+        400: Expired/invalid ID token
+    """
+    async with async_session.begin() as session:
+
+        if not await Employees.exists(session, g.authenticated_user):
+            return {"error": "You are not authorized for this command!"}, 401
+
+        id_token = request.args.get('id_token', type=str)
+        if id_token is None:
+            return {"error": "Insufficient information!", "expected": "id_token as an argument"}, 422
+
+        try:
+            rewards = await get_user_eligible_rewards(session, id_token)
+        except(InvalidIdToken):
+            return {"error": "Expired or Invalid ID token"}, 400
+
+        return rewards, 200
+
+
+@application.route('/api/post_reward', methods=['POST'], )
+async def post_reward():
+    """
+    Endpoint for registering a reward in the db
+
+    excepts:
+        401: user not authorized
+        401: user not employee
+        401: employee can't give rewards
+        422: Insufficient information or wrong body type
+        400: user already has this reward
+        400: user isn't eligible to recieve the reward or reward doesn't exist
+        400: expired or invalid ID token
+    """
+    async with async_session.begin() as session:
+
+        employee = await Employees.by_id(session, g.authenticated_user)
+
+        if employee is None:
+            return {"error": "You are not authorized for this command!"}, 401
+
+        if not employee.get("can_reward"):
+            return {"error": "You can't give out rewards! Please contact an admin!"}, 401
+
+        form = await request.form
+
+        id_token = form.get('id_token', type=str)
+        reward_id = form.get('reward_id', type=int)
+        logger.debug(f"id_token : {id_token}, reward_id : {reward_id}")
+        if None in (reward_id, id_token):
+            return {"error": "Insufficient information!", "expected": "id_token and reward_id as form-data"}, 422
+
+        try:
+            if await RewardsLog.insert(session, get_id_from_token(id_token), reward_id, g.authenticated_user):
+                return {"message": "Reward given!"}, 200
+            return {"error": "User already recieved this reward!"}, 400
+        except BadUserRequest:
+            return {"error": "User isn't eligible or reward doesn't exist!"}, 400
+        except InvalidIdToken:
+            return {"error": "Expired or invalid ID token"}, 400
+
+
 # ###### IMAGE SERVER HANDLERS ######
 
 
@@ -555,7 +640,48 @@ async def profile_pictures():
     return {"error": "Insufficient information!", }, 422
 
 
+@application.route('/imageserver/rewards', methods=['GET'], )
+async def reward_pictures():
+    """
+    Get a reward photo based on name.
+
+    params:
+        name -> name of the picture, including the extension (.png, .jpg)
+
+    returns:
+        picture, as a file
+
+    excepts:
+        401 - invalid token
+        404 - picture not found
+        400 - file name not valid
+        422 - name argument missing
+    """
+    name = request.args.get('name', type=str, )
+
+    logger.debug(f"user requested profile picture : {name}")
+
+    if name is not None:
+        # regex testing if user is trying to access other parts of the OS (with..)
+        if match(r'^[\w\s_+\-()]([\w\s_+\-().])+$', name) is None:
+            return {"error": "Invalid profile picture!", }, 400
+
+        file_path = os.path.join(
+            'public',
+            'rewards',
+            name,
+        )
+
+        if path.isfile(file_path):
+            return await send_file(file_path, mimetype='image/gif')
+        else:
+            return {"error": "Picture not found", }, 404
+
+    return {"error": "Insufficient information!", }, 422
+
 # ###### WEB SERVER START ######
+
+
 def manual_run():
     application.run(host='0.0.0.0', port=PORT, debug=True, )
 
