@@ -29,14 +29,25 @@ class Places(object):
         except Exception as ex:
             raise DatabaseError(ex)
 
-        return None if result is None else result._asdict()
+        return None if result is None else {
+            col: getattr(result, col)
+            for col in result.keys()
+        }
 
     @staticmethod
     async def all(session: AsyncSession) -> List[Dict[str, Any]]:
         try:
             return list(
                 map(
-                    lambda result: result._asdict(), await (await session.stream(
-                        Places.__query(), )).all(), ), )
+                    lambda result: {
+                        col: getattr(result, col)
+                        for col in result.keys()
+                    }, await (
+                        await session.stream(
+                            Places.__query(),
+                        )
+                    ).all(),
+                ),
+            )
         except Exception as ex:
             raise DatabaseError(ex)

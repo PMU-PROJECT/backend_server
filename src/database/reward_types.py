@@ -17,7 +17,10 @@ class RewardTypes(object):
         try:
             return list(
                 map(
-                    lambda result: result._asdict(), (
+                    lambda result: {
+                        col: getattr(result, col)
+                        for col in result.keys()
+                    }, (
                         await session.execute(
                             select(
                                 [RewardTypesModel, ],
@@ -34,7 +37,10 @@ class RewardTypes(object):
         try:
             return list(
                 map(
-                    lambda result: result._asdict(), (
+                    lambda result: {
+                        col: getattr(result, col)
+                        for col in result.keys()
+                    }, (
                         await session.execute(
                             select(
                                 [RewardTypesModel, ],

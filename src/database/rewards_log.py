@@ -17,17 +17,22 @@ class RewardsLog(object):
         try:
             return list(
                 map(
-                    lambda result: result._asdict(), (
+                    lambda result: {
+                        col.name: getattr(result, col.name)
+                        for col in result.__table__.columns
+                    }, (
                         await session.execute(
                             select(
-                                RewardsLogModel.employee_id,
-                                RewardsLogModel.visitor_id,
-                                RewardsLogModel.given_on,
-                                RewardTypesModel.id,
-                                RewardTypesModel.name,
-                                RewardTypesModel.description,
-                                RewardTypesModel.minimum_stamps,
-                                RewardTypesModel.picture,
+                                [
+                                    RewardsLogModel.employee_id,
+                                    RewardsLogModel.visitor_id,
+                                    RewardsLogModel.given_on,
+                                    RewardTypesModel.id,
+                                    RewardTypesModel.name,
+                                    RewardTypesModel.description,
+                                    RewardTypesModel.minimum_stamps,
+                                    RewardTypesModel.picture,
+                                ],
                             ).where(
                                 RewardsLogModel.visitor_id == visitor_id,
                             ).join(

@@ -72,14 +72,20 @@ class Employees(object):
         except Exception as ex:
             raise DatabaseError(ex)
 
-        return None if result is None else result._asdict()
+        return None if result is None else {
+            col.name: getattr(result, col.name)
+            for col in result.keys()
+        }
 
     @staticmethod
     async def all_by_place(session: AsyncSession, place_id: int) -> List[Dict[str, Any]]:
         try:
             return list(
                 map(
-                    lambda result: result._asdict(),
+                    lambda result: {
+                        col.name: getattr(result, col.name)
+                        for col in result.keys()
+                    },
                     await (
                         await session.stream(
                             Employees.__query().where(

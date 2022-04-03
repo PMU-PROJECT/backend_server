@@ -50,7 +50,10 @@ class Users(object):
         except Exception as ex:
             raise DatabaseError(ex)
 
-        return None if result is None else result._asdict()
+        return None if result is None else {
+            col: getattr(result, col)
+            for col in result.keys()
+        }
 
     @staticmethod
     async def insert(session: AsyncSession, first_name: str, last_name: str, email: str) -> int:
