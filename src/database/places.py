@@ -16,7 +16,9 @@ class Places(object):
         return select(
             [RegionsModel.name.label('region_name'), CitiesModel.name.label('city_name'), PlacesModel.id,
                 PlacesModel.name.label('name'), PlacesModel.description, PlacesModel.latitude, PlacesModel.longitude, ],
-            from_obj=PlacesModel, ).join(
+        ).select_from(
+            PlacesModel,
+        ).join(
             CitiesModel, PlacesModel.city_id == CitiesModel.id, ).join(
             RegionsModel, CitiesModel.region_id == RegionsModel.id, )
 

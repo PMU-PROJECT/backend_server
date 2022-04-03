@@ -1,4 +1,4 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql.expression import insert, select, literal
@@ -31,7 +31,7 @@ class Users(object):
             raise DatabaseError(ex)
 
     @staticmethod
-    async def by_id(session: AsyncSession, user_id: int) -> Union[None, Dict[str, Any]]:
+    async def by_id(session: AsyncSession, user_id: int) -> Optional[Dict[str, Any]]:
         try:
             result: Union[None, Row] = (
                 await session.execute(

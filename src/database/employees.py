@@ -53,7 +53,8 @@ class Employees(object):
                 EmployeesModel.can_reward,
                 EmployeesModel.place_id
             ],
-            from_obj=EmployeesModel,
+        ).select_from(
+            EmployeesModel,
         ).join(
             UsersModel,
             EmployeesModel.id == UsersModel.id,
@@ -74,7 +75,7 @@ class Employees(object):
 
         return None if result is None else {
             col.name: getattr(result, col.name)
-            for col in result.keys()
+            for col in result.__table__.columns
         }
 
     @staticmethod
@@ -83,7 +84,7 @@ class Employees(object):
             return list(
                 map(
                     lambda result: {
-                        col.name: getattr(result, col.name)
+                        col: getattr(result, col)
                         for col in result.keys()
                     },
                     await (

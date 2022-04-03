@@ -18,8 +18,8 @@ class RewardTypes(object):
             return list(
                 map(
                     lambda result: {
-                        col: getattr(result, col)
-                        for col in result.keys()
+                        col.name: getattr(result, col.name)
+                        for col in result.__table__.columns
                     }, (
                         await session.execute(
                             select(
@@ -38,8 +38,8 @@ class RewardTypes(object):
             return list(
                 map(
                     lambda result: {
-                        col: getattr(result, col)
-                        for col in result.keys()
+                        col.name: getattr(result, col.name)
+                        for col in result.__table__.columns
                     }, (
                         await session.execute(
                             select(

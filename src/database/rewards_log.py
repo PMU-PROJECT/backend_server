@@ -18,8 +18,8 @@ class RewardsLog(object):
             return list(
                 map(
                     lambda result: {
-                        col.name: getattr(result, col.name)
-                        for col in result.__table__.columns
+                        col: getattr(result, col)
+                        for col in result.keys()
                     }, (
                         await session.execute(
                             select(
