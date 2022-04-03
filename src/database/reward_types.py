@@ -20,13 +20,10 @@ class RewardTypes(object):
                     lambda result: result._asdict(), (
                         await session.execute(
                             select(
-                                RewardTypesModel.id,
-                                RewardTypesModel.name,
-                                RewardTypesModel.description,
-                                RewardTypesModel.minimum_stamps,
+                                [RewardTypesModel, ],
                             ),
                         )
-                    ).all(),
+                    ).scalars().all(),
                 ),
             )
         except Exception as ex:
@@ -56,7 +53,7 @@ class RewardTypes(object):
                                 ).scalar_subquery(),
                             ),
                         )
-                    ).all(),
+                    ).scalars().all(),
                 ),
             )
         except Exception as ex:

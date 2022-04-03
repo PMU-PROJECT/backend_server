@@ -13,7 +13,7 @@ from .database.stamps import Stamps
 from .database.users import Users
 from .utils.all_sites_filter import AllSitesFilter
 from .config.logger_config import logger
-from .id_token import get_id_from_token, InvalidIdToken
+from .id_token import get_id_from_token
 
 
 async def get_tourist_sites(session: AsyncSession, site_type: AllSitesFilter, visitor_id: int):
@@ -193,16 +193,19 @@ async def get_employee_info(session: AsyncSession, employee_id: int):
 
 
 async def get_user_eligible_rewards(session: AsyncSession, id_token: str):
-    id = get_id_from_token(id_token)
-    logger.debug(f"ID: {id}")
-    stamps = await Stamps.all(session, id)
+    visitor_id = get_id_from_token(id_token)
+    logger.debug(f"ID: {visitor_id}")
+
+    stamps = await Stamps.all(session, visitor_id)
     logger.debug(f"Stamps count : {len(stamps)}")
-    received_rewards = await RewardsLog.all_by_visitor_id(session, id)
+
+    received_rewards = await RewardsLog.all_by_visitor_id(session, visitor_id)
     logger.debug(f"Received num of rewards : {len(received_rewards)}")
+
     return {
         "received_rewards": received_rewards,
         "eligible_rewards": await RewardTypes.eligible(
             session,
-            [reward.get('reward_id') for reward in received_rewards]
+            visitor_id,
         )
     }
