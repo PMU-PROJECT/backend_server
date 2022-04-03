@@ -179,7 +179,7 @@ async def get_site_info():
 
     return (site, 200) if site is not None else ({"error": "Site not found", }, 404)
 
-# Stamping endpoints
+# Identification endpoint
 
 
 @application.route('/api/get_id_token', methods=['GET', ], )
@@ -205,6 +205,8 @@ async def id_token() -> Tuple[Dict[str, str], int]:
             g.authenticated_user,
         ),
     }, 200
+
+# Stamipng endpoint
 
 
 @application.route('/api/make_stamp', methods=['POST', ], )
@@ -503,7 +505,7 @@ async def eligible_rewards():
         try:
             rewards = await get_user_eligible_rewards(session, id_token)
         except(InvalidIdToken):
-            return {"error": "Expired/Invalid ID token"}, 400
+            return {"error": "Expired or Invalid ID token"}, 400
 
         return rewards, 200
 

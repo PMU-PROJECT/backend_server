@@ -137,7 +137,7 @@ async def get_self_info(session: AsyncSession, user_id: int):
     user['given_rewards'] = await RewardsLog.all_by_visitor_id(session, user_id)
     user['eligible_rewards'] = await RewardTypes.eligible(session,
                                                           len(user['stamps']),
-                                                          [reward['reward_id'] for reward in user['given_rewards']])
+                                                          [reward.get('reward_id') for reward in user['given_rewards']])
 
     return user
 
@@ -187,8 +187,8 @@ async def get_user_eligible_rewards(session: AsyncSession, id_token: str):
     received_rewards = await RewardsLog.all_by_visitor_id(session, id)
     logger.debug(f"Received num of rewards : {len(received_rewards)}")
     return {
-        "received": received_rewards,
-        "eligible": await RewardTypes.eligible(session,
-                                               len(stamps),
-                                               [reward['reward_id'] for reward in received_rewards])
+        "received_rewards": received_rewards,
+        "eligible_rewards": await RewardTypes.eligible(session,
+                                                       len(stamps),
+                                                       [reward.get('reward_id') for reward in received_rewards])
     }

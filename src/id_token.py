@@ -4,10 +4,8 @@ from typing import List
 from nacl.exceptions import CryptoError
 from nacl.public import SealedBox, PrivateKey, PublicKey
 from nacl.utils import random as random_bytes
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from .config.logger_config import logger
-from .database.employees import Employees
 
 __secret_key: PrivateKey = PrivateKey(random_bytes())
 __public_key: PublicKey = __secret_key.public_key
