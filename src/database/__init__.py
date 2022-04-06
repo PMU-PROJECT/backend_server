@@ -18,4 +18,7 @@ async def db_init():
     global database
 
     async with database.begin() as connection:
-        await connection.run_sync(ORMBase.metadata.create_all, )
+        await connection.run_sync(
+            ORMBase.metadata.create_all,
+            checkfirst=True,
+        )

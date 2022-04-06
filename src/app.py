@@ -3,15 +3,19 @@ import os
 import traceback
 from os import path
 from re import match
-from typing import List, Any, Dict, Optional, Tuple
+from typing import List, Any, Dict, Optional, Tuple, Union
 
 # Dependency imports
+import quart
+from google.auth.exceptions import MutualTLSChannelError
+from googleapiclient import discovery
 from quart import Quart, request, send_file, g
 from quart_cors import cors
 
 from src.database.rewards_log import RewardsLog
 
 # Own imports
+from .database.google_users import GoogleUsers
 from .exceptions import BadUserRequest, RaisedFrom, ServerException
 from .response_formatters import get_employee_info, get_site_by_id, get_tourist_sites, get_self_info, get_user_info, get_user_eligible_rewards
 from .auth import AuthenticationError, validate_token, verify_password, generate_token, hash_password
@@ -369,9 +373,44 @@ async def login():
 
 @application.route('/api/oauth2/google', methods=['GET', ], )
 async def google_oauth2():
-    logger.warning("OAuth called!")
-    logger.debug(google_api.authorization_url(), )
-    logger.debug(request.args, )
+    if 'code' in request.args:
+        google_api.fetch_token(authorization_response=request.url)
+
+        try:
+            info: Dict[str, Union[bool, str]] = discovery.build(
+                'oauth2',
+                'v2',
+                credentials=google_api.credentials,
+            ).me().get()
+
+            async with async_session.begin() as session:
+                user_id: int = await GoogleUsers.insert_or_replace(
+                    session,
+                    info['id'],
+                    info['given_name'],
+                    info['family_name'],
+                    info['email'],
+                )
+
+                return {
+                    'token': generate_id_token(user_id),
+                }
+        except ValueError:
+            logger.error('No credentials!')
+        except MutualTLSChannelError:
+            logger.error('TLS channel error!')
+    elif 'error' in request.args:
+        logger.error(
+            "Error returned from Google's API. Error: %s",
+            request.args['error'],
+        )
+    else:
+        return quart.redirect(
+            *google_api.authorization_url(
+                access_type='offline',
+                include_granted_scopes='true',
+            ),
+        )
 
     raise AuthenticationError()
 
