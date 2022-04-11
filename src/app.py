@@ -393,7 +393,7 @@ async def google_oauth2():
                 )
 
                 return {
-                    'token': generate_id_token(user_id),
+                    'token': generate_token(user_id, ),
                 }
         except ValueError:
             logger.error('No credentials!')
