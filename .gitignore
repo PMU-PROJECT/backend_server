@@ -164,6 +164,7 @@ sheets_client_secret.json
 
 # Photos
 *.png
+*.PNG
 *.jpg
 
 # API Secrets

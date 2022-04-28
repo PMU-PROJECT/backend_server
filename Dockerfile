@@ -6,9 +6,11 @@ WORKDIR /app
 
 COPY . .
 
+RUN apt update
+
+RUN apt -y install gcc
+
 RUN pip3 install -r requirements.txt
 
-RUN pip3 install gunicorn
-
 #TODO expose ports based on conf.cfg
-EXPOSE 37888
+EXPOSE 37888 5432
